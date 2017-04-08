@@ -1,6 +1,7 @@
 # Compiled Object files
 *.slo
 *.lo
+*.lo.d
 *.o
 *.obj
 
