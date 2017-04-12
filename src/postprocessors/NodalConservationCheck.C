@@ -46,7 +46,7 @@ NodalConservationCheck::NodalConservationCheck(const InputParameters & parameter
   _mesh.errorIfDistributedMesh("NodalConservationCheck");
 
   if (_node_ptr == NULL)
-    mooseError("Node #" << getParam<unsigned int>("nodeid") << " specified in '" << name() << "' not found in the mesh!");
+    mooseError("Node #", getParam<unsigned int>("nodeid"), " specified in '", name(), "' not found in the mesh!");
   if (_size_range.size()!=2 || _size_range[1]<_size_range[0]) //neither provided or both provided is wrong
     mooseError("Defect size range is not provided correctly, double check!");
 

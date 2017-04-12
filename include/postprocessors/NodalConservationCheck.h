@@ -16,6 +16,7 @@
 #define NODALCONSERVATIONCHECK_H
 
 #include "GeneralPostprocessor.h"
+#include "MooseVariable.h"
 
 // Forward Declarations
 class NodalConservationCheck;

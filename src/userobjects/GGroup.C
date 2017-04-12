@@ -125,7 +125,7 @@ GGroup::setGroupScheme(){//total _Ng group, _Ng+1 node
         }
         if(GroupScheme_v.back() != _num_v) GroupScheme_v[GroupScheme_v.size()-1] = _num_v;
         if((int)(GroupScheme_v.size()) != _Ng_v+1)
-          mooseError("Group number " << GroupScheme_v.size() << " not correct");
+          mooseError("Group number ", GroupScheme_v.size(), " not correct");
         //shift to left by one (x1,x2],consistent with Golubov's paper
         for(int i=0;i<_Ng_v+1;i++)
           GroupScheme_v[i] -= 1;
@@ -145,7 +145,7 @@ GGroup::setGroupScheme(){//total _Ng group, _Ng+1 node
         }
         if(GroupScheme_i.back() != _num_i) GroupScheme_i[GroupScheme_i.size()-1] = _num_i;
         if((int)(GroupScheme_i.size()) != _Ng_i+1)
-          mooseError("Group number " << GroupScheme_i.size() << " not correct");
+          mooseError("Group number ", GroupScheme_i.size(), " not correct");
         //shift to left by one (x1,x2],consistent with Golubov's paper
         for(int i=0;i<_Ng_i+1;i++)
           GroupScheme_i[i] -= 1;
@@ -180,7 +180,7 @@ GGroup::setGroupScheme(){//total _Ng group, _Ng+1 node
     } 
   }
   else
-    mooseError("Group shceme: " << _GroupScheme << " not correct");
+    mooseError("Group shceme: ", _GroupScheme, " not correct");
 
 
   //calculate the dispersion of each group

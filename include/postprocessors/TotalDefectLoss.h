@@ -17,6 +17,7 @@
 
 #include "GeneralPostprocessor.h"
 #include "MaterialConstants.h"
+#include "MooseVariable.h"
 
 // Forward Declarations
 class TotalDefectLoss;
