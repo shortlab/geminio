@@ -1,0 +1,42 @@
+#include "GeminioApp.h"
+#include "Moose.h"
+#include "AppFactory.h"
+
+template<>
+InputParameters validParams<GeminioApp>()
+{
+  InputParameters params = validParams<MooseApp>();
+  return params;
+}
+
+GeminioApp::GeminioApp(const InputParameters & parameters) :
+    MooseApp(parameters)
+{
+  srand(libMesh::processor_id());
+  
+  Moose::registerObjects(_factory);
+  GeminioApp::registerObjects(_factory);
+
+  Moose::associateSyntax(_syntax, _action_factory);
+  GeminioApp::associateSyntax(_syntax, _action_factory);
+}
+
+GeminioApp::~GeminioApp()
+{
+}
+
+void
+GeminioApp::registerApps()
+{
+  registerApp(GeminioApp);
+}
+
+void
+GeminioApp::registerObjects(Factory & factory)
+{
+}
+
+void
+GeminioApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
+{
+}
