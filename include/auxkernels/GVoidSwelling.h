@@ -44,6 +44,9 @@ protected:
    */
 
   const GGroup & _gc;
+  Real _scale_factor;
+  int _lower_bound;
+  int _upper_bound;
   std::vector<unsigned int> _no_v_vars;
   std::vector<const VariableValue *> _val_v_vars;
 

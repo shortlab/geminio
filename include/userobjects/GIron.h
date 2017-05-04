@@ -37,6 +37,9 @@ public:
   double diff(int, std::string,double) const;
 
 private:
+  double Ev_formation,Ei_formation,Evb2,Eib2;//description in cpp file
+  double Ei_binding_factor;
+  double Ev_binding_factor;
 };
 
 template<>

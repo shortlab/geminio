@@ -18,19 +18,17 @@ InputParameters validParams<GroupConstant>()
   InputParameters params = validParams<GeneralUserObject>();
   MooseEnum GroupScheme("Uniform Gaussian","Uniform");
   params.addRequiredParam<MooseEnum>("GroupScheme",GroupScheme, "Group method to use. Choices are: "+GroupScheme.getRawNames());
-  params.addParam<Real>("sigma",-1.0,"Gaussian group scheme standard deviation");
-  params.addParam<Real>("boosting_factor",1.0,"Gaussian distribution scale factor");
-  params.addParam<int>("max_defect_v_size",0,"largest cluster size");
-  params.addParam<int>("max_defect_i_size",0,"largest cluster size");
-  params.addRequiredParam<int>("number_v","Total number of groups, count single size as a group with group size 1");
-  params.addRequiredParam<int>("number_i","Total number of groups, count single size as a group with group size 1");
+  params.addRequiredParam<int>("max_defect_v_size","largest cluster size");
+  params.addRequiredParam<int>("max_defect_i_size","largest cluster size");
+  params.addParam<int>("number_v","Total number of groups, count single size as a group with group size 1");
+  params.addParam<int>("number_i","Total number of groups, count single size as a group with group size 1");
   params.addRequiredParam<std::vector<int> >("mobile_v_size", "A vector of mobile species sizes");
   params.addRequiredParam<std::vector<int> >("mobile_i_size", "A vector of mobile species sizes");
-  params.addRequiredParam<int>("max_single_v_group","largest cluster size using group size of 1");
-  params.addRequiredParam<int>("max_single_i_group","largest cluster size using group size of 1");
+  params.addParam<int>("max_single_v_group","largest cluster size using group size of 1");
+  params.addParam<int>("max_single_i_group","largest cluster size using group size of 1");
   params.addRequiredParam<Real>("temperature","[K], system temperature");
   params.addParam<bool>("update",false,"Update grouping scheme or not");
-  params.addParam<UserObjectName>("material","","name of the userobject that provide material constants, i.e. emit, abosrb");
+  params.addRequiredParam<UserObjectName>("material","name of the userobject that provide material constants, i.e. emit, abosrb");
   params.addClassDescription("User object using shape functions to calculate group constants");
   return params;
 }
@@ -38,23 +36,17 @@ InputParameters validParams<GroupConstant>()
 GroupConstant::GroupConstant(const InputParameters & parameters) :
     GeneralUserObject(parameters),
     _GroupScheme(getParam<MooseEnum>("GroupScheme")),
-    _sigma(getParam<Real>("sigma")),
-    _boosting_factor(getParam<Real>("boosting_factor")),
-   // _shape_type(getParam<MooseEnum>("shape_type")),
-    _Ng_v(getParam<int>("number_v")),
-    _Ng_i(getParam<int>("number_i")),
+    _Ng_v(isParamValid("number_v")?getParam<int>("number_v"):(getParam<int>("max_defect_v_size")-1)),
+    _Ng_i(isParamValid("number_i")?getParam<int>("number_i"):(getParam<int>("max_defect_i_size")-1)),
     _num_v(getParam<int>("max_defect_v_size")),
     _num_i(getParam<int>("max_defect_i_size")),
-    //GroupScheme_v(_Ng_v>0?(_Ng_v+1):0),//reserve size
-    //GroupScheme_i(_Ng_i>0?(_Ng_i+1):0),
     _v_size(getParam<std::vector<int> >("mobile_v_size")),
     _i_size(getParam<std::vector<int> >("mobile_i_size")),
-    _single_v_group(getParam<int>("max_single_v_group")),
-    _single_i_group(getParam<int>("max_single_i_group")),
+    _single_v_group(isParamValid("max_single_v_group")?getParam<int>("max_single_v_group"):(getParam<int>("max_defect_v_size")-1)),
+    _single_i_group(isParamValid("max_single_i_group")?getParam<int>("max_single_i_group"):(getParam<int>("max_defect_i_size")-1)),
     _T(getParam<Real>("temperature")),
     _update(getParam<bool>("update")),
-    _has_material(getParam<UserObjectName>("material") != ""),
-    _material(_has_material? &getUserObject<GMaterialConstants>("material"):NULL)
+    _material(&getUserObject<GMaterialConstants>("material"))
    // _emit_array(NULL),
    // _absorb_matrix(NULL)
 {
@@ -126,18 +118,15 @@ GroupConstant::setGroupScheme(){//total _Ng group, _Ng+1 node
 //add vacancy group scheme
     if(_Ng_v>0){
         int single_v_group = _single_v_group+1;//1. 2. 3. each as a group, [1 2) [2 3) [3 4)
-        int count = 0;
         for(int i=1;i<=single_v_group;i++){
             GroupScheme_v.push_back(i);
-            count++;
 //            printf("add %d\n",GroupScheme_v.back());
         }
         if(_single_v_group<_Ng_v){
-          int interval = (int)(_num_v-single_v_group)/(_Ng_v-single_v_group+1);
-          for(int i=single_v_group+interval;count<=_Ng_v;){//i<=_num_v;
-              GroupScheme_v.push_back(i);
-              count++;
-              i += interval;
+          double interval = 1.0*(_num_v-single_v_group)/(_Ng_v-single_v_group+1);
+          for(int i=1;i<(_Ng_v-_single_v_group+1);i++){
+              int next_size = (int)(single_v_group+i*interval);
+              GroupScheme_v.push_back(next_size);
           }
         }
         if(GroupScheme_v.back() != _num_v) GroupScheme_v[GroupScheme_v.size()-1] = _num_v;
@@ -147,77 +136,21 @@ GroupConstant::setGroupScheme(){//total _Ng group, _Ng+1 node
 //append intersitial group scheme
     if(_Ng_i>0){
         int single_i_group = _single_i_group+1;//1. 2. 3. each as a group, [1 2) [2 3) [3 4)
-        int count = 0;
         for(int i=1;i<=single_i_group;i++){
             GroupScheme_i.push_back(-i);//make negative to distinguish from vacancy type
-            count++;
  //           printf("add %d\n",-i);
         }
         if(_single_i_group<_Ng_i){
-          int interval = (int)(_num_i-single_i_group)/(_Ng_i-single_i_group+1);
-          for(int i=single_i_group+interval;count<=_Ng_i;){
-              GroupScheme_i.push_back(-i);
-              count++;
- //             printf("add %d\n",-i);
-              i += interval;
+          double interval = 1.0*(_num_i-single_i_group)/(_Ng_i-single_i_group+1);
+          for(int i=1;i<(_Ng_i-_single_i_group+1);i++){
+              int next_size = (int)(single_i_group+i*interval);
+              GroupScheme_i.push_back(-next_size);
           }
         }
         if(GroupScheme_i.back() != -_num_i) GroupScheme_i[GroupScheme_i.size()-1] = -_num_i;
         if((int)(GroupScheme_i.size()) != _Ng_i+1)
           mooseError("Group number ", GroupScheme_i.size(), " not correct");
     }
-  }
-  else if(_GroupScheme=="Gaussian"){
-    if(_sigma<0) 
-      mooseError("Gaussian Group Scheme setting not correct");
-    auto gauss = [](double x, double sigma){ return 1.0/sigma/std::sqrt(2.0*3.141592653589793)*std::exp(-x*x/(2.0*sigma*sigma));};
-//add vacancy group scheme
-    if(_Ng_v>0){
-        int single_v_group = _single_v_group+1;//1. 2. 3. each as a group, [1 2) [2 3) [3 4)
-        for(int i=1;i<=single_v_group;i++){
-            GroupScheme_v.push_back(i);
-//            printf("add %d\n",GroupScheme_v.back());
-        }
-        if(_single_v_group<_Ng_v){
-          int count = single_v_group;
-          double interval = 4.0*_sigma/(_Ng_v-_single_v_group);
-          double start = -2.0*_sigma;
-          double factor = 1.0/gauss(start,_sigma); 
-          double x = start;
-          int n_inc;
-          for(int i=single_v_group+1;i<=_Ng_v+1;i++){
-            int n_inc = (int)(_boosting_factor*std::max(1.0,factor*gauss(x,_sigma)));
-            count += n_inc;
-            x += interval;
-            GroupScheme_v.push_back(count);
-          }
-        }
-        printf("maximum v size: %d\n",GroupScheme_v.back());
-     
-    }
-//append intersitial group scheme
-    if(_Ng_i>0){
-        int single_i_group = _single_i_group+1;//1. 2. 3. each as a group, [1 2) [2 3) [3 4)
-        for(int i=1;i<=single_i_group;i++){
-            GroupScheme_i.push_back(-i);//make negative to distinguish from vacancy type
- //           printf("add %d\n",-i);
-        }
-        if(_single_i_group<_Ng_i){
-          int count = single_i_group;
-          double interval = 4.0*_sigma/(_Ng_i-_single_i_group);
-          double start = -2.0*_sigma;
-          double factor = 1.0/gauss(start,_sigma); 
-          double x = start;
-          int n_inc;
-          for(int i=single_i_group+1;i<=_Ng_i+1;i++){
-            n_inc = (int)(_boosting_factor*std::max(1.0,factor*gauss(x,_sigma)));
-            count += n_inc;
-            x += interval;
-            GroupScheme_i.push_back(-count);
-          }
-        }
-        printf("maximum i size: %d\n",GroupScheme_i.back());
-      } 
   }
   else
     mooseError("Group shceme: ", _GroupScheme, " not correct");

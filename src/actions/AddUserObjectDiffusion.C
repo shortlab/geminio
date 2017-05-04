@@ -52,44 +52,31 @@ AddUserObjectDiffusion::AddUserObjectDiffusion(const InputParameters & params) :
     AddVariableAction(params)
 {
 }
-//only emission of point defects of same type are considered
+
 void
 AddUserObjectDiffusion::act()
 {
   std::vector<int> v_size = getParam<std::vector<int> >("mobile_v_size");
   std::vector<int> i_size = getParam<std::vector<int> >("mobile_i_size");
   std::string uo = getParam<std::string>("group_constant");
-  std::vector<Real> vv,ii;
-  int total_mobile_v = v_size.size();
-  int total_mobile_i = i_size.size();
-  for(int i=0;i<total_mobile_v;i++){
-      vv.push_back(1.0);//account for sign; sink "+"
-  }
-  for(int i=0;i<total_mobile_i;i++){
-      ii.push_back(1.0);//account for sign; sink "+"
-  }
-
-  for(int cur_num=1;cur_num<total_mobile_v;cur_num++){
-    double coef = vv[cur_num-1];//cur_num to vacancy,"+"
+  
+  for(int cur_num=1;cur_num<=v_size.size();cur_num++){
     std::string var_name_v = name() +"v"+ Moose::stringify(v_size[cur_num-1]);//add kernel for mobile v
     InputParameters params = _factory.getValidParams("UserObjectDiffusion");
     params.set<NonlinearVariableName>("variable") = var_name_v;
-    params.set<Real>("coeff") = coef;//loss "+"
     params.set<UserObjectName>("user_object") = uo;
     _problem->addKernel("UserObjectDiffusion", "Diffusion_" + var_name_v+Moose::stringify(counter), params);
-    printf("add UserObjectDiffusion disl: %s, coef: %lf\n",var_name_v.c_str(),coef);
+    printf("add UserObjectDiffusion: %s\n",var_name_v.c_str());
     counter++;
   }
 
-  for(int cur_num=1;cur_num<total_mobile_i;cur_num++){
-    double coef = ii[cur_num-1];
+  for(int cur_num=1;cur_num<=i_size.size();cur_num++){
     std::string var_name_i = name() +"i"+ Moose::stringify(i_size[cur_num-1]);//add kernel for mobile i
     InputParameters params = _factory.getValidParams("UserObjectDiffusion");
     params.set<NonlinearVariableName>("variable") = var_name_i;
-    params.set<Real>("coeff") = coef;//loss "+"
     params.set<UserObjectName>("user_object") = uo;
     _problem->addKernel("UserObjectDiffusion", "Diffusion_" + var_name_i+Moose::stringify(counter), params);
-    printf("add UserObjectDiffusion disl: %s, coef: %lf\n",var_name_i.c_str(),coef);
+    printf("add UserObjectDiffusion: %s \n",var_name_i.c_str());
     counter++;
   }
 }

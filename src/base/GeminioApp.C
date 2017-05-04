@@ -28,6 +28,8 @@
 #include "GSumSIAClusterDensity.h"
 #include "ClusterDensity.h"
 
+// include functions
+#include "PiecewiseLinearTimeLimit.h"
 
 // Next come the materials
 #include "RadiationMaterial.h"
@@ -40,6 +42,7 @@
 #include "AddLotsOfSingleVariable.h"
 #include "AddLotsOfSource.h"
 #include "AddClusterICAction.h"
+#include "AddLotsOfFunction.h"
 #include "AddLotsOfSink_disl.h"
 #include "AddLotsOfVariableAction.h"
 #include "AddUserObjectVariableProduct.h"
@@ -146,6 +149,8 @@ GeminioApp::registerObjects(Factory & factory)
   registerAux(ClusterDensity);
   registerAux(GSumSIAClusterDensity);
 
+  // Register functions
+  registerFunction(PiecewiseLinearTimeLimit);
 
   // Register materials classes
   registerMaterial(RadiationMaterial);
@@ -194,6 +199,7 @@ GeminioApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
   registerAction(AddLotsOfSource,"add_kernel");
   registerAction(AddUserObjectVariableProduct, "add_kernel");
   registerAction(AddClusterICAction, "add_ic");
+  registerAction(AddLotsOfFunction, "add_function");
   registerAction(AddLotsOfSink_disl,"add_kernel");
   registerAction(AddLotsOfVariableAction,"add_variable");
   registerAction(AddLotsOfVariableAction,"add_ic");
@@ -213,6 +219,7 @@ GeminioApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
   syntax.registerActionSyntax("AddUserObjectDislocationSink", "LotsOfUserObjectDislocationSink/*");
   syntax.registerActionSyntax("AddLotsOfSource", "LotsOfSource/*");
   syntax.registerActionSyntax("AddClusterICAction", "ClusterIC/*");
+  syntax.registerActionSyntax("AddLotsOfFunction", "LotsOfFunction/*");
   syntax.registerActionSyntax("AddLotsOfSink_disl", "LotsOfSink_disl/*");
   syntax.registerActionSyntax("AddLotsOfVariableAction", "LotsOfVariables/*");
   syntax.registerActionSyntax("AddMobileDefects", "MobileDefects/*");

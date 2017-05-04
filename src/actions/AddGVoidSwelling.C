@@ -43,6 +43,9 @@ InputParameters validParams<AddGVoidSwelling>()
   params.addRequiredParam<int>("number_v", "The number of vacancy variables to add");
   params.addRequiredParam<std::string>("aux_var","aux variable name to hold value");
   params.addRequiredParam<std::string>("group_constant", "user object name");
+  params.addParam<Real>("scale_factor",1.0,"scale factor used in the kernel");
+  params.addParam<int>("lower_bound","starting size to count, inclusive");
+  params.addParam<int>("upper_bound","ending size to count, inclusive");
   return params;
 }
 
@@ -56,6 +59,7 @@ void
 AddGVoidSwelling::act()
 {
   int number_v = getParam<int>("number_v");
+  Real scale_factor = getParam<Real>("scale_factor");
 
   std::string aux_var = getParam<std::string>("aux_var");
   std::string uo = getParam<std::string>("group_constant");
@@ -75,6 +79,11 @@ AddGVoidSwelling::act()
   InputParameters params = _factory.getValidParams("GVoidSwelling");
   params.set<AuxVariableName>("variable") = aux_var;
   params.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
+  params.set<Real>("scale_factor") = scale_factor;
+  if (isParamValid("lower_bound"))
+    params.set<int>("lower_bound") = getParam<int>("lower_bound");
+  if (isParamValid("upper_bound"))
+    params.set<int>("upper_bound") = getParam<int>("upper_bound");
   params.set<UserObjectName>("user_object") = uo;
   _problem->addAuxKernel("GVoidSwelling", "GVoidSwelling_" + aux_var, params);
 }

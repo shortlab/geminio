@@ -50,8 +50,6 @@ public:
 
 protected:
   MooseEnum _GroupScheme;
-  Real _sigma;
-  Real _boosting_factor;
   typedef std::map<std::pair<int,int> , Real> DoubleKey;// +: vacancy -:interstitial
   typedef std::map<int,Real> SingleKey;// +: vacancy -:interstitial
   int _Ng_v;
@@ -75,7 +73,6 @@ protected:
   SingleKey _diff_array;
   DoubleKey _absorb_matrix;  
 
-  bool _has_material;
   const GMaterialConstants * const _material;
 };
 

@@ -41,8 +41,8 @@ InputParameters validParams<AddLotsOfSource>()
   MooseEnum orders(AddVariableAction::getNonlinearVariableOrders());
 
   InputParameters params = validParams<AddVariableAction>();
-  params.addRequiredParam<unsigned int>("number_v", "The number of vacancy variables to add");
-  params.addRequiredParam<unsigned int>("number_i", "The number of interstitial variables to add");
+  //params.addRequiredParam<unsigned int>("number_v", "The number of vacancy variables to add");
+  //params.addRequiredParam<unsigned int>("number_i", "The number of interstitial variables to add");
   params.addRequiredParam<std::vector<Real> >("source_v_size", "A vector of distribution of creation along ion range");
   params.addRequiredParam<std::vector<Real> >("source_i_size", "A vector of distribution of creation along ion range");
   params.addParam<std::string>("func_pre_name", "the sub-block name of [functions]");
@@ -66,15 +66,14 @@ AddLotsOfSource::act()
   std::vector<Real> vv = getParam<std::vector<Real> >("source_v");
   std::vector<Real> ii = getParam<std::vector<Real> >("source_i");
   bool custom = getParam<bool>("custom_input");
-  unsigned int _total_v = getParam<unsigned int>("number_v");
-  unsigned int _total_i = getParam<unsigned int>("number_i");
+  //unsigned int _total_v = getParam<unsigned int>("number_v");
+  //unsigned int _total_i = getParam<unsigned int>("number_i");
   std::string func_pre_name = (isParamValid("func_pre_name") ? getParam<std::string>("func_pre_name") : "");
 
-//ATTENTION: the emission of vacancy cluster emit an interstitial or interstitial cluster emit an vacancy is not considered
 
   for (unsigned int cur_num = 1; cur_num <= v_size.size(); cur_num++)
   {
-    if(cur_num <= _total_v){
+    //if(cur_num <= _total_v){
     std::string var_name_v = name() +"v"+ Moose::stringify(v_size[cur_num-1]);
     std::string fun_name_v = func_pre_name + "v" + Moose::stringify(v_size[cur_num-1]);
     InputParameters params = _factory.getValidParams("BodyForce");
@@ -89,11 +88,11 @@ AddLotsOfSource::act()
     _problem->addKernel("BodyForce", "bodyforce_" +  var_name_v + Moose::stringify(counter), params);
     printf("add Source: %s\n",var_name_v.c_str());
     counter++;
-    }
+    //}
   }
   for (unsigned int cur_num = 1; cur_num <= i_size.size(); cur_num++)
   {
-    if(cur_num <= _total_i){
+    //if(cur_num <= _total_i){
     std::string var_name_i = name() +"i"+ Moose::stringify(i_size[cur_num-1]);
     std::string fun_name_i = func_pre_name + "i" + Moose::stringify(i_size[cur_num-1]);
     InputParameters params = _factory.getValidParams("BodyForce");
@@ -108,6 +107,6 @@ AddLotsOfSource::act()
     _problem->addKernel("BodyForce", "bodyforce_"+ var_name_i+ Moose::stringify(counter), params);
     printf("add Source: %s\n",var_name_i.c_str());
     counter++;
-    }
+    //}
   }
 }

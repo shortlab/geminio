@@ -288,9 +288,9 @@ GGroup::_diff(int clustersize) const //[cr_start,cr_end)
   else{
     if(-clustersize>_i_size) return 0.0;
     tagi = 1;
-    val = _material->diff(clustersize,species,T);
+    val = _material->diff(-clustersize,species,T);
   }
-  //printf("diffusion of clustersize (%d): %f\n",clustersize,val);
+  //printf("diffusion of clustersize (%d): %.4e\n",clustersize,val);
   return val;
 }
 

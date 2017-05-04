@@ -23,8 +23,11 @@
 *.la
 *.a
 *.lib
+*.0
 
 # Executables
 *.exe
 *.out
 *.app
+*.e
+

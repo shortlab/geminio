@@ -9,9 +9,11 @@
 #define INF 100
 #define SCALE 1 //change unit from um
 #define PI 3.14159265359
-#define Vatom 1.205e-11 //iron atom volume um^3
+#define Vatom 1.165e-11 //iron atom volume um^3
+#define Burgers 2.4734e-4 //burgers vector (um) (sqrt(3)/2*a0)
 #define Boltz_const 8.6173315e-5 //boltzmann constant eV/K
 
+/*** reference: Influence of the picosecond defect distribution on damage accumulation in irradiated α-Fe ***/
 template<>
 InputParameters validParams<GIron>()
 {
@@ -24,6 +26,13 @@ GIron::GIron(const InputParameters & parameters)
 : GMaterialConstants(parameters)
 {
 //printf("GIron constructed\n");
+  atomic_vol = Vatom;
+  Ei_formation = 3.77; //interstitial formation energy eV
+  Ev_formation = 2.07; //vacancy formation energy eV
+  Eib2 = 0.8; // binding energy for interstitial cluster size 2
+  Evb2 = 0.3; // binding energy for vacancy cluster size 2
+  Ei_binding_factor = (Eib2-Ei_formation)/ (std::pow(2.0,2.0/3)-1);
+  Ev_binding_factor = (Evb2-Ev_formation)/(pow(2.0,2.0/3)-1);
 }
 
 void GIron::initialize()
@@ -41,28 +50,19 @@ void GIron::finalize()
 double GIron::energy(int s,std::string species, std::string Etype) const{//unit:eV
     double E=0.0;
     if ((species == "V") && (Etype == "migration")){
-//// from literature
         switch(s){
             case 1:
-            {
-                E = 0.83;
+                E = 0.67;
                 break;
-            }
             case 2:
-            {
                 E = 0.62;
                 break;
-            }
             case 3:
-            {
                 E = 0.35;
                 break;
-            }
             case 4:
-            {
                 E = 0.48;
                 break;
-            }
             default:
                 E = INF;
         }
@@ -70,20 +70,17 @@ double GIron::energy(int s,std::string species, std::string Etype) const{//unit:
     else if ((species == "I") && (Etype == "migration")){
         switch(s){
             case 1:
-            {
                 E = 0.34;
                 break;
-            }
             case 2:
-            {
                 E = 0.42;
                 break;
-            }
             case 3:
-            {
                 E = 0.43;
                 break;
-            }
+            case 4:
+                E = 0.43;
+                break;
             default:
                 E = INF;
         }
@@ -91,65 +88,38 @@ double GIron::energy(int s,std::string species, std::string Etype) const{//unit:
     else if ((species == "V") && (Etype == "binding")){
         switch(s){
             case 1:
-            {
                 E = INF;
                 break;
-            }
-
             case 2:
-            {
-                E = 0.30;
+                E = Evb2;
                 break;
-            }
             case 3:
-            {
                 E = 0.37;
                 break;
-            }
             case 4:
-            {
                 E = 0.62;
                 break;
-            }
-            case 5:
-            {
-                E = 0.73;
-                break;
-            }
             default:
-            {
-                E = 2.2 + (0.3-2.2)/(pow(2.0,2.0/3)-1) * (pow(s,2.0/3)-pow(s-1,2.0/3));//capillary law
-            }
+                E = Ev_formation + Ev_binding_factor * (std::pow(s*1.0,2.0/3)-std::pow(s-1.0,2.0/3));//capillary law
         }
 
     }
     else if ((species == "I") && (Etype == "binding")) {
         switch(s){
             case 1:
-            {
                 E = INF;
                 break;
-            }
             case 2:
-            {
-                E = 0.83;
+                E = Eib2;
                 break;
-            }
             case 3:
-            {
                 E = 0.92;
                 break;
-            }
             case 4:
-            {
                 E = 1.64;
                 break;
-            }
             default:
-            {
-                //E = 3.8 - 5.06*(pow(s,2.0/3)-pow(s-1,2.0/3));//capillary law
-                E = 3.64 - 4.78378*(pow(s,2.0/3)-pow(s-1,2.0/3));//capillary law
-            }
+                E = Ei_formation + Ei_binding_factor * (std::pow(s*1.0,2.0/3)-std::pow(s-1.0,2.0/3)) ;
         }
     }
     else
@@ -165,17 +135,21 @@ double GIron::D_prefactor(int s, std::string species) const{
 //size S1 and S2
 double GIron::absorb(int S1, int S2, std::string C1, std::string C2,double T, int tag1, int tag2) const{
     if(tag1==0 && tag2==0) return 0.0;//tag1, tag2 denotes the mobility of C1 and C2; 1: mobile, 0: immobile
-    double r_vi = 0.65e-3;//recombination radius in um
-    double r1 = pow(S1*Vatom*3/4/PI,1.0/3); //cluster effective radius
-    double r2 = pow(S2*Vatom*3/4/PI,1.0/3); //cluster effective radius
+    double r0 = 3.3e-4;//recombination radius in um
+    double bias1 = (! C1.compare("V"))? _v_bias : _i_bias;
+    //double r1 = bias1 * (std::pow(S1*Vatom*3/4/PI,1.0/3)+r0); //cluster effective radius
+    double r1 = (! C1.compare("V"))? (bias1*(std::pow(S1*Vatom*3/4/PI,1.0/3)+r0)):(bias1*(std::pow(S1*Vatom/Burgers/PI,1.0/2)+r0)); //cluster effective radius
+    double bias2 = (! C2.compare("V"))? _v_bias : _i_bias;
+    //double r2 = bias2 * (std::pow(S2*Vatom*3/4/PI,1.0/3)+r0); //cluster effective radius
+    double r2 = (! C2.compare("V"))? (bias2*(std::pow(S2*Vatom*3/4/PI,1.0/3)+r0)):(bias2*(std::pow(S2*Vatom/Burgers/PI,1.0/2)+r0)); //cluster effective radius
     double D_s1 = D_prefactor(S1,C1)*exp(-energy(S1,C1,"migration")/Boltz_const/T);
     double D_s2 = D_prefactor(S2,C2)*exp(-energy(S2,C2,"migration")/Boltz_const/T);
-    return 4*PI*(D_s1*tag1+D_s2*tag2)*(r1+r2+r_vi);
+    return 4*PI*(D_s1*tag1+D_s2*tag2)*(r1+r2);
 
 }
 
 double GIron::diff(int S1, std::string C1,double T) const {
-	return D_prefactor(S1,C1)*exp(-energy(S1,C1,"migration")/Boltz_const/T);
+	return D_prefactor(S1,C1)*std::exp(-energy(S1,C1,"migration")/Boltz_const/T);
 }//in um^2/s
 
 double GIron::emit(int S1, int S2, double T, std::string C1, std::string C2, int tag1, int tag2) const{

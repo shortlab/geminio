@@ -27,24 +27,24 @@ UserObjectDiffusion::UserObjectDiffusion(const
      InputParameters & parameters)
      :Diffusion(parameters),
      _coeff(getParam<Real>("coeff")),
-     _gc(getUserObject<GroupConstant>("user_object"))
+     _gc(getUserObject<GGroup>("user_object"))
 {
   NonlinearVariableName cur_var_name = getParam<NonlinearVariableName>("variable");
   groupNo = getGroupNumber(cur_var_name);
+  _coeff *= _gc._diff(groupNo);
 }
 
 Real
 UserObjectDiffusion::computeQpResidual()
 {
-  Real gc = _gc._diff(groupNo);
-  return  _coeff * gc * Diffusion::computeQpResidual();
+  //Real gc = _gc._diff(groupNo);
+  return  _coeff * Diffusion::computeQpResidual();
 }
 
 Real
 UserObjectDiffusion::computeQpJacobian()
 {
-  Real gc = _gc._diff(groupNo);
-  return  _coeff * gc * Diffusion::computeQpJacobian();
+  return  _coeff * Diffusion::computeQpJacobian();
 }
 
 

@@ -12,33 +12,23 @@
 /*            See COPYRIGHT for full restrictions               */
 /****************************************************************/
 
-#ifndef USEROBJECTDIFFUSION_H
-#define USEROBJECTDIFFUSION_H
+#ifndef ADDLOTSOFFUNCTION_H
+#define ADDLOTSOFFUNCTION_H
 
-#include "Diffusion.h"
-#include "GGroup.h"
-//Forward Declarations
-class UserObjectDiffusion;
+#include "AddFunctionAction.h"
 
+class AddLotsOfFunction;
 
 template<>
-InputParameters validParams<UserObjectDiffusion>();
+InputParameters validParams<AddLotsOfFunction>();
 
-class UserObjectDiffusion : public Diffusion
+
+class AddLotsOfFunction : public AddFunctionAction
 {
 public:
-  
-  UserObjectDiffusion(const 
-                            InputParameters & parameters);
-  
-protected:
-  virtual Real computeQpResidual();
-  virtual Real computeQpJacobian();
-  int getGroupNumber(std::string);
+  AddLotsOfFunction(const  InputParameters & parameters);
 
-private:
-  Real _coeff;
-  const GGroup & _gc;
-  int groupNo;
+  virtual void act();
 };
-#endif 
+
+#endif // AddLotsOfFunction_H
