@@ -36,6 +36,7 @@ public:
   void finalize();
 
   void setGroupScheme();
+  void setGroupConstant();
   void updateGroupScheme();
   int CurrentGroupV(int) const;
   int CurrentGroupI(int) const;
@@ -72,6 +73,14 @@ protected:
   bool _update;
 //  Real* _emit_array;//total _Ng_v + _Ng_i
 //  Real** _absorb__matrix;//(_Ng_v+_Ng_i)xtotal_no_of_mobile_species
+
+  typedef std::map<std::pair<int,int> , Real> DoubleKey;// +: vacancy -:interstitial
+  typedef std::map<int,Real> SingleKey;// +: vacancy -:interstitial
+  SingleKey _emit_array;
+  SingleKey _disl_array;
+  SingleKey _diff_array;
+  DoubleKey _absorb_matrix;  
+
   bool _has_material;
   const GMaterialConstants * const _material;
   Point dummy;

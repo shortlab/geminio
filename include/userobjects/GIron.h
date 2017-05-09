@@ -30,6 +30,9 @@ public:
   virtual void finalize();
 
   Real absorb(int,int,std::string,std::string,double,int,int) const;
+  Real absorbVV(int,int,int,double) const;
+  Real absorbVI(int,int,int,double) const;
+  Real absorbII(int,int,int,double) const;
   Real emit(int,int,double,std::string,std::string,int,int) const;
   Real disl_ksq(int,std::string,double,int=1) const;
   double energy(int,std::string,std::string) const;

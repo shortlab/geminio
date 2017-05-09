@@ -5,7 +5,7 @@
 #######################################
 #PBS -N SpatialFe
 
-#PBS -l select=2:ncpus=24:mpiprocs=24
+#PBS -l select=1:ncpus=24:mpiprocs=24
 #PBS -l walltime=72:00:00
 #PBS -q general 
 #PBS -P ldrd

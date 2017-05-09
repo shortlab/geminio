@@ -66,7 +66,7 @@ AddUserObjectDiffusion::act()
     params.set<NonlinearVariableName>("variable") = var_name_v;
     params.set<UserObjectName>("user_object") = uo;
     _problem->addKernel("UserObjectDiffusion", "Diffusion_" + var_name_v+Moose::stringify(counter), params);
-    printf("add UserObjectDiffusion: %s\n",var_name_v.c_str());
+    //printf("add UserObjectDiffusion: %s\n",var_name_v.c_str());
     counter++;
   }
 
@@ -76,7 +76,7 @@ AddUserObjectDiffusion::act()
     params.set<NonlinearVariableName>("variable") = var_name_i;
     params.set<UserObjectName>("user_object") = uo;
     _problem->addKernel("UserObjectDiffusion", "Diffusion_" + var_name_i+Moose::stringify(counter), params);
-    printf("add UserObjectDiffusion: %s \n",var_name_i.c_str());
+    //printf("add UserObjectDiffusion: %s \n",var_name_i.c_str());
     counter++;
   }
 }

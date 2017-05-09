@@ -76,7 +76,7 @@ GMobile::GMobile(const InputParameters & parameters)
     std::cout << std::endl;
   } 
 }
-
+/* use accurate kinetic parameters from each size within each group
 Real
 GMobile::computeQpResidual()
 {
@@ -285,6 +285,232 @@ GMobile::computeQpJacobian()
   }
   return jac_sum*_test[_i][_qp] * _phi[_j][_qp];
 }
+*/
+
+/* use approximation: kinetic parameter is constant for each size within one group */
+Real
+GMobile::computeQpResidual()
+{
+  Real res_sum = 0.0, partial_res = 0.0;
+  int cur_size;//should be positive value
+  int ii = _max_mobile_i;
+  int vv = _max_mobile_v;
+  int max_vi;
+  Real conc,conci,concj;
+  Real group_conc_sum;
+
+
+  if(_cur_size>0){//v type
+    cur_size = _cur_size; 
+    max_vi =  std::min(_cur_size+ii,max_v);
+
+
+    //vi reaction loss(-)
+    for(int i=1;i<=_number_i;i++){
+      group_conc_sum = (*_val_i_vars[2*(i-1)])[_qp]*_gc.GroupScheme_i_del[i-1];
+      partial_res += group_conc_sum *_gc._absorb(cur_size,-i);//group cur_size and group i; 
+    }
+    res_sum += partial_res * _u[_qp];
+
+    //vv reaction loss(-)
+    partial_res = 0.0;
+    int limit_group = _gc.CurrentGroupV(max_v-cur_size);
+    for(int i=1;i <= limit_group;i++){//garantee the largest size doesn't exceed GroupScheme_v.back()
+      group_conc_sum = (*_val_v_vars[2*(i-1)])[_qp]*_gc.GroupScheme_v_del[i-1];
+      partial_res += group_conc_sum *_gc._absorb(cur_size,i);//group cur_size and group i; 
+    }
+    for(int i=max_v-cur_size+1;i<=_gc.GroupScheme_v[limit_group];i++){//deduct over added terms
+      partial_res -= _gc._absorb(cur_size,limit_group)*((*_val_v_vars[2*(limit_group-1)])[_qp]+(*_val_v_vars[2*(limit_group-1)+1])[_qp]*(i-_gc.GroupScheme_v_avg[limit_group-1]));
+    }
+    res_sum += partial_res * _u[_qp];
+    if(cur_size*2 <= max_v){
+      //printf("vv reaction %d (-): %d %d\n",cur_size,cur_size,cur_size);     
+      res_sum += _u[_qp]*_u[_qp]*_gc._absorb(cur_size,cur_size);
+    }
+
+    //vv reaction gain(+)
+    for(int i=1;i <= (int)(cur_size/2);i++){
+        //printf("vv reaction %d (+): %d %d\n",cur_size,cur_size-i,cur_size);     
+        conci = getConcBySize(cur_size-i);
+        concj = getConcBySize(i);
+        res_sum -= conci * concj *_gc._absorb(cur_size-i,i);
+    }
+
+    //vi reaction gain(+)
+    for(int i=cur_size+1;i<=max_vi;i++){
+      if(i-cur_size <= ii || i <= vv ){//make sure one is mobile
+        conci = getConcBySize(cur_size-i);
+        concj = getConcBySize(i);
+        res_sum -= conci * concj * _gc._absorb(_gc.CurrentGroupV(i),-_gc.CurrentGroupI(i-cur_size));
+        //printf("vi reaction %d (+): %d %d\n",cur_size,cur_size-i,i);     
+      }
+    }
+
+    //v emission loss(-)
+    if(cur_size!=1){
+      res_sum += _u[_qp]*_gc._emit(cur_size);
+      //printf("emission loss %d (-): %d\n",cur_size,cur_size);     
+    }
+    
+    //v+1 emission gain(+)
+    if(cur_size<max_v){
+      //printf("emission gain %d (+): %d\n",cur_size,cur_size+1);     
+      conc = getConcBySize(cur_size+1);
+      res_sum -= conc *_gc._emit(_gc.CurrentGroupV(cur_size+1));
+    }
+    if(cur_size==1){
+      for(int i=2;i<=_number_v;i++){
+        //printf("emission gain %d (+): %d\n",cur_size,i);     
+        group_conc_sum = (*_val_v_vars[2*(i-1)])[_qp]*_gc.GroupScheme_v_del[i-1];
+        res_sum -= group_conc_sum * _gc._emit(i);
+        //printf("res: %f %d %f\n",res_sum,cur_size,_gc._emit(i));
+      }
+    }
+
+    //dislocation loss(-)
+    res_sum += _u[_qp]*_gc._disl(cur_size);
+  }
+
+  else{//i type 
+   
+    cur_size = -_cur_size;//make it positive
+    max_vi = std::min(cur_size+vv,max_i);
+
+    //iv reaction loss(-)
+    for(int i=1;i<=_number_v;i++){
+      group_conc_sum = (*_val_v_vars[2*(i-1)])[_qp] * _gc.GroupScheme_v_del[i-1];
+      partial_res += group_conc_sum * _gc._absorb(-cur_size,i);
+    }
+    res_sum += partial_res *_u[_qp];
+
+    //ii reaction loss(-)
+    partial_res = 0.0;
+    int limit_group = _gc.CurrentGroupI(max_i-cur_size);
+    for(int i=1;i <= limit_group;i++){//garantee the largest size doesn't exceed GroupScheme_i.back()
+      group_conc_sum = (*_val_i_vars[2*(i-1)])[_qp] * _gc.GroupScheme_i_del[i-1];
+      partial_res += group_conc_sum * _gc._absorb(-cur_size,-i);
+    }
+    for(int i=max_i-cur_size+1;i<=_gc.GroupScheme_i[limit_group];i++){//deduct over added terms
+      partial_res -= _gc._absorb(-cur_size,-limit_group)*((*_val_i_vars[2*(limit_group-1)])[_qp]+(*_val_i_vars[2*(limit_group-1)+1])[_qp]*(i-_gc.GroupScheme_v_avg[limit_group-1]));
+    }
+    res_sum += partial_res * _u[_qp];
+    if(cur_size*2<=max_i){
+      res_sum += _u[_qp]*_u[_qp]*_gc._absorb(-cur_size,-cur_size);
+      //printf("reaction %d (-): %d %d\n",_cur_size,_cur_size,_cur_size);     
+    } 
+
+    //ii reaction gain(+)
+    for(int i=1;i <= (int)(cur_size/2);i++){
+        conci = getConcBySize(-i);
+        concj = getConcBySize(i-cur_size);
+        res_sum -= conci * concj *_gc._absorb(i-cur_size,-i);
+        //printf("reaction %d (+): %d %d\n",_cur_size,i-cur_size,-i);     
+      //}
+    }
+  
+    //iv reaction gain(+)
+    for(int i=cur_size+1;i<=max_vi;i++){
+      if(i-cur_size <= vv || i <= ii){//make sure one is mobile
+        conci = getConcBySize(-i);
+        concj = getConcBySize(i-cur_size);
+        res_sum -= conci * concj *_gc._absorb(-_gc.CurrentGroupI(i),_gc.CurrentGroupV(i-cur_size));
+        //printf("reaction %d (+): %d %d\n",_cur_size,i-cur_size,-i);     
+      }
+    }
+
+    //i emission loss(-)
+    if(cur_size!=1){
+      res_sum += _u[_qp]*_gc._emit(-cur_size);
+      //printf("emission %d (-): %d\n",_cur_size,_cur_size);     
+    }
+    
+    //i+1 emission gain(+)
+    if(cur_size<max_i){
+      conc = getConcBySize(-cur_size-1);
+      res_sum -= conc *_gc._emit(-_gc.CurrentGroupI(cur_size+1));
+      //printf("emission %d (+): %d\n",_cur_size,-cur_size-1);     
+    }
+    if(cur_size==1){
+      for(int i=2;i<=_number_i;i++){
+        group_conc_sum = (*_val_i_vars[2*(i-1)])[_qp] * _gc.GroupScheme_i_del[i-1];
+        res_sum -= group_conc_sum * _gc._emit(-i);
+      }
+    }
+
+    //dislocation loss(-)
+    res_sum += _u[_qp]*_gc._disl(-cur_size);
+  }
+  return res_sum*_test[_i][_qp];
+}
+
+Real
+GMobile::computeQpJacobian()
+{
+  Real jac_sum = 0.0;
+  int cur_size;//should be positive value
+  Real conc,group_conc_sum;
+  if(_cur_size>0){//v type
+    
+    cur_size = _cur_size; 
+
+    //vi reaction loss(-)
+    for(int i=1;i<=_number_i;i++){
+      group_conc_sum = (*_val_i_vars[2*(i-1)])[_qp]*_gc.GroupScheme_i_del[i-1];
+      jac_sum += group_conc_sum *_gc._absorb(cur_size,-i);//group cur_size and group i; 
+    }
+
+    //vv reaction loss(-)
+    int limit_group = _gc.CurrentGroupV(max_v-cur_size);
+    for(int i=1;i <= limit_group;i++){//garantee the largest size doesn't exceed GroupScheme_v.back()
+      group_conc_sum = (*_val_v_vars[2*(i-1)])[_qp]*_gc.GroupScheme_v_del[i-1];
+      jac_sum += group_conc_sum *_gc._absorb(cur_size,i);//group cur_size and group i; 
+    }
+    for(int i=max_v-cur_size+1;i<=_gc.GroupScheme_v[limit_group];i++){//deduct over added terms
+      jac_sum -= _gc._absorb(cur_size,limit_group)*((*_val_v_vars[2*(limit_group-1)])[_qp]+(*_val_v_vars[2*(limit_group-1)+1])[_qp]*(i-_gc.GroupScheme_v_avg[limit_group-1]));
+    }
+    if(cur_size*2<=max_v)//2*u^2->4*u*phi
+      jac_sum += 3.0*_u[_qp]*_gc._absorb(cur_size,cur_size);
+//(*_val_v_vars[cur_size-1])[_qp]
+  
+    //v emission loss(-)
+    jac_sum += _gc._emit(cur_size);
+    
+    //dislocation loss(-)
+    jac_sum += _gc._disl(cur_size);
+  }
+
+  else{//i type
+   
+    cur_size = -_cur_size;//make it positive
+
+    //iv reaction loss(-)
+    for(int i=1;i<=_number_v;i++){
+      group_conc_sum = (*_val_v_vars[2*(i-1)])[_qp] * _gc.GroupScheme_v_del[i-1];
+      jac_sum += group_conc_sum * _gc._absorb(-cur_size,i);
+    }
+
+    //ii reaction loss(-)
+    int limit_group = _gc.CurrentGroupI(max_i-cur_size);
+    for(int i=1;i <= limit_group;i++){//garantee the largest size doesn't exceed GroupScheme_i.back()
+      group_conc_sum = (*_val_i_vars[2*(i-1)])[_qp] * _gc.GroupScheme_i_del[i-1];
+      jac_sum += group_conc_sum * _gc._absorb(-cur_size,-i);
+    }
+    for(int i=max_i-cur_size+1;i<=_gc.GroupScheme_i[limit_group];i++){//deduct over added terms
+      jac_sum -= _gc._absorb(-cur_size,-limit_group)*((*_val_i_vars[2*(limit_group-1)])[_qp]+(*_val_i_vars[2*(limit_group-1)+1])[_qp]*(i-_gc.GroupScheme_v_avg[limit_group-1]));
+    }
+    if(cur_size*2<=max_i)
+      jac_sum += 3.0*_u[_qp]*_gc._absorb(-cur_size,-cur_size);// *(*_val_i_vars[cur_size-1])[_qp]
+  
+    //i emission loss(-)
+    jac_sum += _gc._emit(-cur_size);
+    
+    //dislocation loss(-)
+    jac_sum += _gc._disl(-cur_size);
+  }
+  return jac_sum*_test[_i][_qp] * _phi[_j][_qp];
+}
+
+
 
 Real 
 GMobile::computeQpOffDiagJacobian(unsigned int jvar){

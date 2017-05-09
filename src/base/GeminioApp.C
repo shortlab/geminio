@@ -83,6 +83,7 @@
 #include "AddGConstantKernels.h"
 //#####################user objects##########//
 #include "GGroup.h"
+#include "GGroupTest.h"
 #include "GMaterialConstants.h"
 #include "GGroupingTest.h"
 #include "GIron.h"
@@ -177,6 +178,7 @@ GeminioApp::registerObjects(Factory & factory)
   registerKernel(ConstantKernel);
   //register userobjects
   registerUserObject(GGroup);
+  registerUserObject(GGroupTest);
   registerUserObject(GMaterialConstants);
   registerUserObject(GGroupingTest);
   registerUserObject(GIron);

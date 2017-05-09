@@ -5,12 +5,12 @@
 [GlobalParams]
 #set the largest size for vacancy clusters and interstitial clusters. Also defined in blocks to be clearer.
 
-  number_v = 250    #number of vacancy variables i.e. total_groups
+  number_v = 120    #number of vacancy variables i.e. total_groups
   number_single_v = 52  #max size with group size 1
   max_mobile_v = 4
   mobile_v_size = '1 2 3 4'
 
-  number_i = 250      #number of interstitial variables, set to 0
+  number_i = 120      #number of interstitial variables, set to 0
   number_single_i = 52  #max size with group size 1
   max_mobile_i = 4
   mobile_i_size = '1 2 3 4'
@@ -126,9 +126,22 @@
     material = 'material'
     #GroupScheme = Uniform
     GroupScheme = RSpace
-    dr_coef = 0.5
+    dr_coef = 3.5
     update = false
     execute_on = initial
+  [../]
+[]
+
+[Postprocessors]
+  [./FluxChecker-V]
+    type = NodalVariableValue
+    nodeid = 1
+    variable = groups0v1
+  [../]
+  [./FluxChecker-I]
+    type = NodalVariableValue
+    nodeid = 1
+    variable = groups0i1
   [../]
 []
 
@@ -182,5 +195,5 @@
   #file_base = out
   exodus = true
   csv = true
-  console = false
+  console = true
 []

@@ -12,6 +12,7 @@
 #define Vatom 1.165e-11 //iron atom volume um^3
 #define Burgers 2.4734e-4 //burgers vector (um) (sqrt(3)/2*a0)
 #define Boltz_const 8.6173315e-5 //boltzmann constant eV/K
+#define R0 3.3e-4 //um capture radius term
 
 /*** reference: Influence of the picosecond defect distribution on damage accumulation in irradiated α-Fe ***/
 template<>
@@ -32,7 +33,7 @@ GIron::GIron(const InputParameters & parameters)
   Eib2 = 0.8; // binding energy for interstitial cluster size 2
   Evb2 = 0.3; // binding energy for vacancy cluster size 2
   Ei_binding_factor = (Eib2-Ei_formation)/ (std::pow(2.0,2.0/3)-1);
-  Ev_binding_factor = (Evb2-Ev_formation)/(pow(2.0,2.0/3)-1);
+  Ev_binding_factor = (Evb2-Ev_formation)/(std::pow(2.0,2.0/3)-1);
 }
 
 void GIron::initialize()
@@ -148,12 +149,100 @@ double GIron::absorb(int S1, int S2, std::string C1, std::string C2,double T, in
 
 }
 
+//vv reaction; flag=0: both immobile; flag=1: first mobile; flag=2: second mobile; flag=3: both mobile
+double GIron::absorbVV(int S1, int S2, int flag, double T) const{
+    double result = 0.0;
+    double r1 = _v_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3)+R0); //cluster effective radius
+    double r2 = _v_bias*(std::pow(S2*Vatom*3/4/PI,1.0/3)+R0); //cluster effective radius
+    switch(flag){
+        case 1:
+        {
+          double D_s1 = D_prefactor(S1,"V")*exp(-energy(S1,"V","migration")/Boltz_const/T);
+          result = 4.0*PI*D_s1*(r1+r2);
+          break;
+        }
+        case 2:
+        {
+          double D_s2 = D_prefactor(S2,"V")*exp(-energy(S2,"V","migration")/Boltz_const/T);
+          result = 4.0*PI*D_s2*(r1+r2);
+          break;
+        }
+        case 3:
+        {
+          double D_s1 = D_prefactor(S1,"V")*exp(-energy(S1,"V","migration")/Boltz_const/T);
+          double D_s2 = D_prefactor(S2,"V")*exp(-energy(S2,"V","migration")/Boltz_const/T);
+          result = 4*PI*(D_s1+D_s2)*(r1+r2);
+          break;
+        }
+    }
+    return result;
+}
+
+//vi reaction; flag=0: both immobile; flag=1: first mobile; flag=2: second mobile; flag=3: both mobile
+double GIron::absorbVI(int S1, int S2, int flag, double T) const{
+    double result = 0.0;
+    double r1 = _v_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3)+R0);
+    double r2 = _i_bias*(std::pow(S2*Vatom/Burgers/PI,1.0/2)+R0); //cluster effective radius
+    switch(flag){
+        case 1:
+        {
+          double D_s1 = D_prefactor(S1,"V")*exp(-energy(S1,"V","migration")/Boltz_const/T);
+          result = 4.0*PI*D_s1*(r1+r2);
+          break;
+        }
+        case 2:
+        {
+          double D_s2 = D_prefactor(S2,"I")*exp(-energy(S2,"I","migration")/Boltz_const/T);
+          result = 4.0*PI*D_s2*(r1+r2);
+          break;
+        }
+        case 3:
+        {
+          double D_s1 = D_prefactor(S1,"V")*exp(-energy(S1,"V","migration")/Boltz_const/T);
+          double D_s2 = D_prefactor(S2,"I")*exp(-energy(S2,"I","migration")/Boltz_const/T);
+          result = 4*PI*(D_s1+D_s2)*(r1+r2);
+          break;
+        }
+    }
+    return result;
+}
+
+//ii reaction; flag=0: both immobile; flag=1: first mobile; flag=2: second mobile; flag=3: both mobile
+double GIron::absorbII(int S1, int S2, int flag, double T) const{
+    double result = 0.0;
+    double r1 = _i_bias*(std::pow(S1*Vatom/Burgers/PI,1.0/2)+R0); //cluster effective radius
+    double r2 = _i_bias*(std::pow(S2*Vatom/Burgers/PI,1.0/2)+R0); //cluster effective radius
+    switch(flag){
+        case 1:
+        {
+          double D_s1 = D_prefactor(S1,"I")*exp(-energy(S1,"I","migration")/Boltz_const/T);
+          result = 4.0*PI*D_s1*(r1+r2);
+          break;
+        }
+        case 2:
+        {
+          double D_s2 = D_prefactor(S2,"I")*exp(-energy(S2,"I","migration")/Boltz_const/T);
+          result = 4.0*PI*D_s2*(r1+r2);
+          break;
+        }
+        case 3:
+        {
+          double D_s1 = D_prefactor(S1,"I")*exp(-energy(S1,"I","migration")/Boltz_const/T);
+          double D_s2 = D_prefactor(S2,"I")*exp(-energy(S2,"I","migration")/Boltz_const/T);
+          result = 4*PI*(D_s1+D_s2)*(r1+r2);
+          break;
+        }
+    }
+    return result;
+}
+
 double GIron::diff(int S1, std::string C1,double T) const {
 	return D_prefactor(S1,C1)*std::exp(-energy(S1,C1,"migration")/Boltz_const/T);
 }//in um^2/s
 
 double GIron::emit(int S1, int S2, double T, std::string C1, std::string C2, int tag1, int tag2) const{
     //for now only consider self species emmision, S1 emits S2, S1==1
+    if (C1 == "I") return 0.0;//intersitial cluster doesnt' emit.
     double emit_c = 0.0;
     if (S1 > S2 && S2==1)
         emit_c = absorb(S1,S2,C1,C1,T,tag1,tag2)/(Vatom) *exp(-energy(S1,C1,"binding")/Boltz_const/T);//unit:/s only emit point defect of the same species 

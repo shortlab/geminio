@@ -36,9 +36,13 @@ public:
   Real emit(int,int,double,std::string,std::string,int,int) const;
   Real disl_ksq(int,std::string,double,int=1) const;
   double energy(int,std::string,std::string) const;
-  double D_prefactor(int,std::string="") const;
+  double D_prefactor(int,std::string) const;
   double diff(int, std::string,double) const;
 
+private:
+  double Ev_formation,Ei_formation,Evb2,Eib2;//description in cpp file
+  double Ei_binding_factor;
+  double Ev_binding_factor;
 };
 
 template<>

@@ -77,6 +77,7 @@ GGroup::GGroup(const InputParameters & parameters) :
     GroupScheme_i_del = new int[_Ng_i];
   
     setGroupScheme();
+    setGroupConstant();
 }
 
 GGroup::~GGroup(){
@@ -91,6 +92,8 @@ GGroup::~GGroup(){
 void
 GGroup::initialize()
 {
+
+
 //print grouping info
   if (DEBUG){
     int num_groups = GroupScheme_v.size();
@@ -221,6 +224,59 @@ GGroup::updateGroupScheme(){
 }
 
 void
+GGroup::setGroupConstant(){
+//set up group constants for each group
+  Real val = 0.0;
+//emission coefs
+  int tagi = 0;
+  for(int i=1;i<=_Ng_v;i++){ //only consider vacancy cluster emission of a group
+    if (i<=_v_size) tagi = 1;
+      _emit_array.insert(std::make_pair(i,_material->emit(GroupScheme_v_avg[i-1],1,_T,"V","V",tagi,1)));
+  }
+  
+//dislocation absorption coefs
+  for(int i=1;i<=_v_size;i++)
+    _disl_array.insert(std::make_pair(i,_material->disl_ksq(i,"V",_T)));
+  for(int i=1;i<=_i_size;i++)
+    _disl_array.insert(std::make_pair(-i,_material->disl_ksq(i,"I",_T)));
+
+//diffusion coefs
+  for(int i=1;i<=_v_size;i++)
+    _diff_array.insert(std::make_pair(i,_material->diff(i,"V",_T)));
+  for(int i=1;i<=_i_size;i++)
+    _diff_array.insert(std::make_pair(-i,_material->diff(i,"I",_T)));
+
+//absorption coefficients
+  tagi = 0;
+  for(int i=1;i<=_Ng_v;i++){
+    if (i<=_v_size) tagi = 1;
+    else tagi = 0;
+    for(int j=1;j<=_v_size;j++){
+      val = _material->absorbVV(GroupScheme_v_avg[i-1],GroupScheme_v_avg[j-1],tagi+2,_T);
+      _absorb_matrix.insert(std::make_pair(std::make_pair(i,j),val));
+    }
+    for(int j=1;j<=_i_size;j++){
+      val = _material->absorbVI(GroupScheme_v_avg[i-1],GroupScheme_i_avg[j-1],tagi+2,_T);
+      _absorb_matrix.insert(std::make_pair(std::make_pair(i,-j),val));
+    }
+  }
+
+  for(int i=1;i<=_Ng_i;i++){
+    if (i<=_i_size) tagi = 1;
+    else tagi = 0;
+    for(int j=1;j<=_v_size;j++){
+      val = _material->absorbVI(GroupScheme_v_avg[j-1],GroupScheme_i_avg[i-1],tagi*2+1,_T);
+      _absorb_matrix.insert(std::make_pair(std::make_pair(-i,j),val));
+    }
+    for(int j=1;j<=_i_size;j++){
+      val = _material->absorbII(GroupScheme_i_avg[j-1],GroupScheme_i_avg[i-1],tagi*2+1,_T);
+      _absorb_matrix.insert(std::make_pair(std::make_pair(-i,-j),val));
+    }
+  }
+}
+
+
+void
 GGroup::execute()
 {
   if(_update){
@@ -232,7 +288,7 @@ void GGroup::finalize()
 {}
 
 
-
+/* test the time cost of function: _emit(), _disl(), _diff()
 Real
 GGroup::_emit(int clustersize) const //[cr_start,cr_end)
 {
@@ -293,12 +349,52 @@ GGroup::_diff(int clustersize) const //[cr_start,cr_end)
   //printf("diffusion of clustersize (%d): %.4e\n",clustersize,val);
   return val;
 }
+*/
+
+/* simplified _emit(), _diff(), _disl functions
+Real
+GGroup::_emit(int clustersize) const
+{
+  const char* species = (clustersize>0)?"V":"I";
+  int tagi = 0;//denote mobility
+  if(clustersize<0) return 0.0; //don't consider emission of intersitital cluster
+  if(clustersize>0 && clustersize<=_v_size)
+      tagi = 1;
+  Real val = _material->emit(clustersize,1,_T,species,species,tagi,1);
+  //printf("emit of clustersize (%d): %f\n",clustersize,val);
+  return val;
+}
+
+Real
+GGroup::_disl(int clustersize) const
+{
+  const char* species = (clustersize>0)?"V":"I";
+  Real val = 0.0;
+  if(clustersize>_v_size || -clustersize>_i_size) return 0.0; //immobile
+  val = _material->disl_ksq(std::abs(clustersize),species,_T,1);
+  //printf("dislocation of clustersize (%d): %f\n",clustersize,val);
+  return val;
+}
+
+Real
+GGroup::_diff(int clustersize) const
+{
+  const char* species = (clustersize>0)?"V":"I";
+  int tagi = 0;//denote mobility
+  Real val = 0.0;
+  if(clustersize>_v_size || -clustersize>_i_size) return 0.0; //immobile
+  val = _material->diff(std::abs(clustersize),species,_T);
+ 
+  //printf("diffusion of clustersize (%d): %.4e\n",clustersize,val);
+  return val;
+}
+
 
 Real
 GGroup::_absorb(int clustersize1, int clustersize2) const //[ot_start,ot_end),[cr_start,cr_end)
 {
   Real val = 0.0;
-  Real T = _T_func? _T_func->value(_t,dummy):_T;
+  Real T = _T; //_T_func? _T_func->value(_t,dummy):_T;
   int i = std::abs(clustersize1);
   int j = std::abs(clustersize2);
   int tagi = 0,tagj = 0;//denote mobility: 0, imobile, 1, mobile
@@ -344,16 +440,56 @@ GGroup::_absorb(int clustersize1, int clustersize2) const //[ot_start,ot_end),[c
     return _material->absorbII(i,j,flag,T);//flag=0: i j immobile; flag=1: i mobile; flag=2: j mobile; flag=3: i j mobile
   }
 }
+*/
 
+/* use pre-calculated group constants */
+Real
+GGroup::_emit(int groupid) const
+{
+    SingleKey::const_iterator it = _emit_array.find(groupid);
+    if(it != _emit_array.end()) 
+        return it->second;
+    return 0.0;
+}
+
+Real
+GGroup::_disl(int groupid) const
+{
+    SingleKey::const_iterator it = _disl_array.find(groupid);
+    if(it != _disl_array.end()) 
+        return it->second;
+    return 0.0;
+}
+
+Real
+GGroup::_diff(int groupid) const
+{
+    SingleKey::const_iterator it = _diff_array.find(groupid);
+    if(it != _diff_array.end()) 
+        return it->second;
+    return 0.0;
+}
+
+Real
+GGroup::_absorb(int groupid1, int groupid2) const 
+{
+    DoubleKey::const_iterator it = _absorb_matrix.find(std::make_pair(groupid1,groupid2));
+    if(it != _absorb_matrix.end())
+        return it->second;//_absorb_matrix[std::make_pair(groupid1,groupid2)]; 
+    it = _absorb_matrix.find(std::make_pair(groupid2,groupid1));
+    if(it != _absorb_matrix.end())
+        return it->second;//_absorb_matrix[std::make_pair(groupid2,groupid1)]; 
+    return 0.0;
+}
 
 int
-GGroup::CurrentGroupV(int i) const{
+GGroup::CurrentGroupV(int i) const{ //group number starts from 1
     std::vector<int>::const_iterator it=std::lower_bound(GroupScheme_v.begin(),GroupScheme_v.end(),i); 
     return it-GroupScheme_v.begin();
 }
 
 int
-GGroup::CurrentGroupI(int i) const{
+GGroup::CurrentGroupI(int i) const{ //group number starts from 1
     std::vector<int>::const_iterator it=std::lower_bound(GroupScheme_i.begin(),GroupScheme_i.end(),i); 
     return it-GroupScheme_i.begin();
 }

@@ -1,0 +1,18 @@
+
+All copies are based on file: 050317_Group_Fe.i
+
+Fe_cp1.i 
+  reference time usage including all necessary kerenels
+  time cost: 16 hrs
+Fe_cp2.i
+  goal: test cost of diffusion kernels  (remove diffusion kernel)
+  time cost: 16 hrs
+Fe_cp3.i
+  goal: test cost of spatial dependent production sources  (use spatially constant sources)
+  time cost: 16 hrs
+Fe_cp4.i
+  goal: test cost of functions in GGroup (_emit(), _disl(), _diff()) 
+
+**Summary: 1. spatial dependent production sources and diffusion kernel don't addition noticeable computation cost
+           2. guess: GGroup costs most of the time
+  

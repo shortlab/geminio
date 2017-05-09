@@ -33,7 +33,7 @@
 #include "libmesh/fe.h"
 
 // class static initialization
-const Real AddGVariable::_abs_zero_tol = 1e-12;
+const Real AddGVariable::_abs_zero_tol = 1e-16;
 
 template<>
 InputParameters validParams<AddGVariable>()
