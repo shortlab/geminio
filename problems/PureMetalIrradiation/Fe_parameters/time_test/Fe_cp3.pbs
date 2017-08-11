@@ -3,7 +3,7 @@
 # Specify nodes, processors per node,
 # and maximum running time
 #######################################
-#PBS -N SpatialFe
+#PBS -N CP3
 
 #PBS -l select=1:ncpus=10:mpiprocs=10
 #PBS -l walltime=72:00:00
@@ -24,6 +24,6 @@ module load use.moose moose-dev-gcc
 cd $PBS_O_WORKDIR 
 echo "Start: `date`"
 #mpirun /home/jinmiao/inl_projects/falcon/grime-dev/grime-dev-opt -i 041817_IM_Fe.i
-mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp3.i
+mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp3.i Outputs/file_base=Fe_cp3_dE0.19eV_M5_out
 echo "End: `date`"
 

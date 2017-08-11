@@ -3,10 +3,10 @@
 # Specify nodes, processors per node,
 # and maximum running time
 #######################################
-#PBS -N CP4
+#PBS -N CP11
 
-#PBS -l select=1:ncpus=12:mpiprocs=12
-#PBS -l walltime=42:00:00
+#PBS -l select=1:ncpus=20:mpiprocs=20
+#PBS -l walltime=20:00:00
 #PBS -q general 
 #PBS -P ldrd
 ##PBS -m e
@@ -23,11 +23,11 @@ module load use.moose moose-dev-gcc
 #source /home/jinmiao/.bashrc
 cd $PBS_O_WORKDIR 
 echo "Start: `date`"
-#for temp in 300 600 800 ; do
-#  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp4.i GlobalParams/temperature=${temp} Outputs/file_base=Fe_cp4_${temp}K_out
-#  #mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp4.i Outputs/file_base=Fe_cp4_dE0.19eV_M10_out
-#echo "End: `date`"
-#done
-  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp4.i 
+#mpirun /home/jinmiao/inl_projects/falcon/grime-dev/grime-dev-opt -i 041817_IM_Fe.i
+for S in 80; do
+  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp11.i Outputs/file_base=Fe_cp10_dE0.20eV_idE0.00eV_S${S}test_723K_out
+  echo "Case end `date`"
+  echo "source size:" ${S}
+done
 echo "End: `date`"
 

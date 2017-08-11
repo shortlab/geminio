@@ -230,8 +230,15 @@ GGroup::setGroupConstant(){
 //emission coefs
   int tagi = 0;
   for(int i=1;i<=_Ng_v;i++){ //only consider vacancy cluster emission of a group
+    tagi = 0;
     if (i<=_v_size) tagi = 1;
-      _emit_array.insert(std::make_pair(i,_material->emit(GroupScheme_v_avg[i-1],1,_T,"V","V",tagi,1)));
+    _emit_array.insert(std::make_pair(i,_material->emit(GroupScheme_v_avg[i-1],1,_T,"V","V",tagi,1)));
+  }
+ //consider sia cluster emission of a group if necessary
+  for(int i=1;i<=_Ng_i;i++){
+    tagi = 0;
+    if (i<=_i_size) tagi = 1;
+    _emit_array.insert(std::make_pair(-i,_material->emit(GroupScheme_i_avg[i-1],1,_T,"I","I",tagi,1)));
   }
   
 //dislocation absorption coefs
@@ -254,10 +261,12 @@ GGroup::setGroupConstant(){
     for(int j=1;j<=_v_size;j++){
       val = _material->absorbVV(GroupScheme_v_avg[i-1],GroupScheme_v_avg[j-1],tagi+2,_T);
       _absorb_matrix.insert(std::make_pair(std::make_pair(i,j),val));
+      //printf("size v : %d and v: %d ---> %f\n",i,j,val);
     }
     for(int j=1;j<=_i_size;j++){
       val = _material->absorbVI(GroupScheme_v_avg[i-1],GroupScheme_i_avg[j-1],tagi+2,_T);
       _absorb_matrix.insert(std::make_pair(std::make_pair(i,-j),val));
+      //printf("size v : %d and i: %d ---> %f\n",i,j,val);
     }
   }
 
@@ -267,10 +276,12 @@ GGroup::setGroupConstant(){
     for(int j=1;j<=_v_size;j++){
       val = _material->absorbVI(GroupScheme_v_avg[j-1],GroupScheme_i_avg[i-1],tagi*2+1,_T);
       _absorb_matrix.insert(std::make_pair(std::make_pair(-i,j),val));
+      //printf("size v : %d and i: %d ---> %f\n",j,i,val);
     }
     for(int j=1;j<=_i_size;j++){
       val = _material->absorbII(GroupScheme_i_avg[j-1],GroupScheme_i_avg[i-1],tagi*2+1,_T);
       _absorb_matrix.insert(std::make_pair(std::make_pair(-i,-j),val));
+      //printf("size i : %d and i: %d ---> %f\n",j,i,val);
     }
   }
 }
@@ -479,6 +490,7 @@ GGroup::_absorb(int groupid1, int groupid2) const
     it = _absorb_matrix.find(std::make_pair(groupid2,groupid1));
     if(it != _absorb_matrix.end())
         return it->second;//_absorb_matrix[std::make_pair(groupid2,groupid1)]; 
+    printf("Warning: absorption coefficient not found: %d %d\n",groupid1,groupid2);
     return 0.0;
 }
 

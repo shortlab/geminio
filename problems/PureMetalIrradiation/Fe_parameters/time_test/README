@@ -12,7 +12,22 @@ Fe_cp3.i
   time cost: 16 hrs
 Fe_cp4.i
   goal: test cost of functions in GGroup (_emit(), _disl(), _diff()) 
+Fe_cp5.i
+  goal: test cost of constant group constants within one group and use pre-calculated group constants
+Fe_cp6.i
+  goal: test the sources distribution
+Fe_cp7.i
+  goal: change intersitital cluster effective radius into equation same with void
+Fe_cp8.i
+  goal: test the effect of dislocation density
+Fe_cp9.i
+  goal: test the sources distribution
 
 **Summary: 1. spatial dependent production sources and diffusion kernel don't addition noticeable computation cost
-           2. guess: GGroup costs most of the time
+           2. make group constants available beforehand and simplify the calculations in GMobile.C, GImmobileL0.C, and GImmobileL1.C saves a lot of time (compared Fe_cp4.i(30+hrs) Fe_cp5.i(1min)). Also the results are very similar
+           3. total number of defects in terms of point defects is too large. Plus void swelling peak is not consisent with experimental results
+           4. the number of nodes doesn't change answer much (negligible 50 nodes vs 80 nodes)
+           5. change effective capture radius of loop to void doesn't change answer much
+           6. a rough estimation shows that the dislocation density term becomes negligible among all terms. Eg. rho * D * C1 << 4 * pi * r * D * C1 * C2
+           7. diffusion kernel makes it easier to converge and the results almost the same from comparison!!!
   

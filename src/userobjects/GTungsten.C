@@ -246,7 +246,7 @@ double GTungsten::emit(int S1, int S2, double T, std::string C1, std::string C2,
     if (C1 == "I") return 0.0;//intersitial cluster doesnt' emit.
     double emit_c = 0.0;
     if (S1 > S2 && S2==1)
-        emit_c = absorb(S1,S2,C1,C1,T,tag1,tag2)/(Vatom) *exp(-energy(S1,C1,"binding")/Boltz_const/T);//unit:/s only emit point defect of the same species 
+        emit_c = absorb(S1-1,S2,C1,C1,T,tag1,tag2)/(Vatom) *exp(-energy(S1,C1,"binding")/Boltz_const/T);//unit:/s only emit point defect of the same species 
     return emit_c;
 }
 

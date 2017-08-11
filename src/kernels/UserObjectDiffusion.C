@@ -38,6 +38,7 @@ Real
 UserObjectDiffusion::computeQpResidual()
 {
   //Real gc = _gc._diff(groupNo);
+  //std::cout << "size: " <<  groupNo << " value: " << _coeff << " res: " << Diffusion::computeQpResidual() << std::endl;
   return  _coeff * Diffusion::computeQpResidual();
 }
 

@@ -124,6 +124,7 @@ AddLotsOfFunction::act()
     params.set<std::vector<Real> >("y") = y;
     params.set<Real>("tlimit") = t_limit;
     _problem->addFunction("PiecewiseLinearTimeLimit", fun_name_v, params);
+    //printf("add Function: %s\n",fun_name_v.c_str());
   }
   for (unsigned int cur_num = 1; cur_num <= ii.size(); cur_num++)
   {
@@ -143,5 +144,6 @@ AddLotsOfFunction::act()
     params.set<std::vector<Real> >("y") = y;
     params.set<Real>("tlimit") = t_limit;
     _problem->addFunction("PiecewiseLinearTimeLimit", fun_name_i, params);
+    //printf("add Function: %s\n",fun_name_i.c_str());
   }
 }

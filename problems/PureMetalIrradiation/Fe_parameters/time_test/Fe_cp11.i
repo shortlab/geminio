@@ -6,18 +6,22 @@
 #set the largest size for vacancy clusters and interstitial clusters. Also defined in blocks to be clearer.
 
   number_v = 300    #number of vacancy variables i.e. total_groups
-  number_single_v = 52  #max size with group size 1
+  number_single_v = 82  #max size with group size 1
   max_mobile_v = 4
   mobile_v_size = '1 2 3 4'
 
   number_i = 300      #number of interstitial variables, set to 0
-  number_single_i = 52  #max size with group size 1
-  max_mobile_i = 5
-  mobile_i_size = '1 2 3 4 5'
+  number_single_i = 82  #max size with group size 1
+  max_mobile_i = 4
+  mobile_i_size = '1 2 3 4'
 
   temperature = 723  #temperature [K]
-  source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50'
-  source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50'
+  #source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30'
+  #source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30'
+  #source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20'
+  #source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20'
+  source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80'
+  source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80'
 []
 
 [Mesh]
@@ -26,7 +30,7 @@
   xmin = 0
   xmax = 2 #2000 change to 1, uniform source for simplicity, no spatical dependence
   dim = 1
-  nx = 100
+  nx = 50
 []
 
 # define defect variables, set variables and boundadry condition as 0 where appropriate
@@ -68,10 +72,10 @@
 #data should be the same with [sources] block and the sub_block name [func_defect_]
     type = PiecewiseLinearTimeLimit
     tlimit = 2.0e8 #limit the time with sources [s]
-    data_file = spatial_defect_cluster_production.txt
+    data_file = spatial_defect_cluster_production_80_test.txt
     axis = 0 #x axis
     format = columns
-    scale_factor = 0.25
+    scale_factor = 0.25 #efficiency
   [../]
 []
 [LotsOfSource]
@@ -101,6 +105,7 @@
   [./groups]
     aux_var = void_swelling
     group_constant = group_constant
+    lower_bound = 152 #1.5nm in diameter
   [../]
 []
 
@@ -171,10 +176,10 @@
   l_tol =  1e-5
   num_steps = 1000
   start_time = 0
-  end_time = 15127.4  #35 dpa with 4.6e-3dpa/s
+  end_time = 5.0e4  #35 dpa with 4.6e-3dpa/s
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 50
+  dtmax = 100
   active = 'TimeStepper'
   [./TimeStepper]
       cutback_factor = 0.8

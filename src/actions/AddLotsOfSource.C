@@ -86,7 +86,7 @@ AddLotsOfSource::act()
       mooseError("Vacancy source number should be the same with provided variables");
     else params.set<Real>("value") = vv[cur_num-1];//Should be the production term of current size, gain should be negative in the kernel
     _problem->addKernel("BodyForce", "bodyforce_" +  var_name_v + Moose::stringify(counter), params);
-    //printf("add Source: %s\n",var_name_v.c_str());
+    //printf("add Source: %s with function %s\n",var_name_v.c_str(),fun_name_v.c_str());
     counter++;
     //}
   }
@@ -105,7 +105,7 @@ AddLotsOfSource::act()
       mooseError("Intersitial source number should be the same with provided variable");
     else params.set<Real>("value") = ii[cur_num-1];// gain should be negative in the kernel
     _problem->addKernel("BodyForce", "bodyforce_"+ var_name_i+ Moose::stringify(counter), params);
-    //printf("add Source: %s\n",var_name_i.c_str());
+    //printf("add Source: %s with function %s\n",var_name_i.c_str(),fun_name_i.c_str());
     counter++;
     //}
   }

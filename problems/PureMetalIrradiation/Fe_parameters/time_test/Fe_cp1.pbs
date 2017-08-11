@@ -3,7 +3,7 @@
 # Specify nodes, processors per node,
 # and maximum running time
 #######################################
-#PBS -N SpatialFe
+#PBS -N CP1
 
 #PBS -l select=1:ncpus=10:mpiprocs=10
 #PBS -l walltime=72:00:00

@@ -5,12 +5,12 @@
 [GlobalParams]
 #set the largest size for vacancy clusters and interstitial clusters. Also defined in blocks to be clearer.
 
-  number_v = 120    #number of vacancy variables i.e. total_groups
+  number_v = 300    #number of vacancy variables i.e. total_groups
   number_single_v = 52  #max size with group size 1
-  max_mobile_v = 4
-  mobile_v_size = '1 2 3 4'
+  max_mobile_v = 8
+  mobile_v_size = '1 2 3 4 5 6 7 8'
 
-  number_i = 120      #number of interstitial variables, set to 0
+  number_i = 300      #number of interstitial variables, set to 0
   number_single_i = 52  #max size with group size 1
   max_mobile_i = 4
   mobile_i_size = '1 2 3 4'
@@ -26,7 +26,7 @@
   xmin = 0
   xmax = 2 #2000 change to 1, uniform source for simplicity, no spatical dependence
   dim = 1
-  nx = 40
+  nx = 100
 []
 
 # define defect variables, set variables and boundadry condition as 0 where appropriate
@@ -71,7 +71,7 @@
     data_file = spatial_defect_cluster_production.txt
     axis = 0 #x axis
     format = columns
-    scale_factor = 1.0
+    scale_factor = 0.25
   [../]
 []
 [LotsOfSource]
@@ -115,10 +115,10 @@
 
 [UserObjects]
   [./material]
-    type = GGroupingTest   #definition should be in front of the usage
+    type = GIron   #definition should be in front of the usage
     i_disl_bias = 1.15
     v_disl_bias = 1.0
-    dislocation = 1 #dislocation density 1.0 /um^2
+    dislocation = 100 #dislocation density 1.0 /um^2
   [../]
 
   [./group_constant]
@@ -126,7 +126,7 @@
     material = 'material'
     #GroupScheme = Uniform
     GroupScheme = RSpace
-    dr_coef = 3.5
+    dr_coef = 1.0
     update = false
     execute_on = initial
   [../]
@@ -158,10 +158,10 @@
   type = Transient
   solve_type = 'PJFNK'
 #  petsc_options =  '-snes_mf_operator'
-#  petsc_options_iname =  '-pc_type -pc_hypre_type -ksp_gmres_restart'
-#  petsc_options_value =  'hypre    boomeramg  81'
-  petsc_options_iname =  '-pc_type -sub_pc_type -ksp_gmres_restart'
-  petsc_options_value =  'bjacobi ilu  81'
+  petsc_options_iname =  '-pc_type -pc_hypre_type -ksp_gmres_restart'
+  petsc_options_value =  'hypre    boomeramg  81'
+#  petsc_options_iname =  '-pc_type -sub_pc_type -ksp_gmres_restart'
+#  petsc_options_value =  'bjacobi ilu  81'
   #trans_ss_check = true
   #ss_check_tol = 1.0e-14
   l_max_its =  30
@@ -169,15 +169,15 @@
   nl_abs_tol=  1e-10  #Question: why change to 1e-12 not work!!!
   nl_rel_tol =  1e-7
   l_tol =  1e-5
-  num_steps = 20
+  num_steps = 1000
   start_time = 0
-  end_time = 7608.7  #35 dpa with 4.6e-3dpa/s
+  end_time = 7563.7 #15127.4  #35 dpa with 4.6e-3dpa/s
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 10
+  dtmax = 50
   active = 'TimeStepper'
   [./TimeStepper]
-      cutback_factor = 0.4
+      cutback_factor = 0.8
       dt = 1e-9
       growth_factor = 2
       type = IterationAdaptiveDT
@@ -195,5 +195,5 @@
   #file_base = out
   exodus = true
   csv = true
-  console = true
+  console = false
 []

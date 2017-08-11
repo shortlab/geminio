@@ -3,10 +3,10 @@
 # Specify nodes, processors per node,
 # and maximum running time
 #######################################
-#PBS -N CP4
+#PBS -N CP7
 
-#PBS -l select=1:ncpus=12:mpiprocs=12
-#PBS -l walltime=42:00:00
+#PBS -l select=1:ncpus=24:mpiprocs=24
+#PBS -l walltime=72:00:00
 #PBS -q general 
 #PBS -P ldrd
 ##PBS -m e
@@ -23,11 +23,11 @@ module load use.moose moose-dev-gcc
 #source /home/jinmiao/.bashrc
 cd $PBS_O_WORKDIR 
 echo "Start: `date`"
-#for temp in 300 600 800 ; do
-#  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp4.i GlobalParams/temperature=${temp} Outputs/file_base=Fe_cp4_${temp}K_out
-#  #mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp4.i Outputs/file_base=Fe_cp4_dE0.19eV_M10_out
-#echo "End: `date`"
+#mpirun /home/jinmiao/inl_projects/falcon/grime-dev/grime-dev-opt -i 041817_IM_Fe.i
+mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp7.i Outputs/file_base=Fe_cp7_dE0.19eV_out
+
+#for rhod in 1000000 ; do #0 10 100 1000 ; do
+#  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp7.i UserObjects/material/dislocation=${rhod} Outputs/file_base=Fe_cp7_disl_${rhod}_out
 #done
-  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_cp4.i 
 echo "End: `date`"
 
