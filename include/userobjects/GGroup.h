@@ -55,17 +55,18 @@ public:
   int* GroupScheme_v_del;//group del
   int* GroupScheme_i_del;//group del
   Real _atomic_vol;
+  int _Ng_v;//number of groups, inclusive
+  int _Ng_i;
+  int _v_size;//maximum mobile cluster size, inclusive
+  int _i_size;
 
 
 protected:
   MooseEnum _GroupScheme;
+  bool _SIADim1D;
   Real _dr_coef;
-  int _Ng_v;
-  int _Ng_i;
   int _num_v;
   int _num_i;
-  int _v_size;
-  int _i_size;
   int _single_v_group;
   int _single_i_group;
   Real _T;

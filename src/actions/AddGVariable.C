@@ -54,6 +54,8 @@ InputParameters validParams<AddGVariable>()
   params.addParam<std::string>("bc_type","neumann", "dirichlet or neumann, depending on w/t spatical dependence");
 
   params.addParam<Real>("boundary_value", 0.0, "Specifies the initial condition for this variable");
+  params.addParam<int>("max_mobile_i",-1,"aux_number: number of auxvariable to create, same with max_mobile_i for 1D motion");
+  params.addParam<std::string>("aux_prefix","aux","the prefix of all auxvariable to create");
  // params.addParam<std::vector<SubdomainName> >("block", "The block id where this variable lives");
  // params.addParam<bool>("eigen", false, "True to make this variable an eigen variable");
   return params;
@@ -78,6 +80,24 @@ AddGVariable::act()
     mooseError("IC_v_size and IC_v should have same length, so are IC_i_size and IC_i., groupsize = 1 ");
   
   std::string _bc_type = getParam<std::string>("bc_type");
+
+  int num_aux = getParam<int>("max_mobile_i");
+  std::string aux_prefix = getParam<std::string>("aux_prefix"); 
+
+  // Set the order from the input
+  Order order = Utility::string_to_enum<Order>(getParam<MooseEnum>("order"));
+  FEFamily family = LAGRANGE;
+  FEType fe_type(order, family);
+
+  if (_current_task == "add_variable")//add aux_variable
+  {
+    std::string var_name;
+    for(int i=1;i<=num_aux;i++){
+      var_name = aux_prefix + Moose::stringify(i);
+      _problem->addAuxVariable(var_name,fe_type);
+    }
+  }
+
 
   if (_current_task == "add_variable")
   {

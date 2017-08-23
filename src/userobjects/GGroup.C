@@ -7,6 +7,8 @@
 
 //*******************make pair to loop up all the group constants   '+': vacancy; '-': intersitial************************//
 // calculate group constant based on hypothetical shape functions
+// Note that 1D or 3D option is provided for SIA and SIA clusters
+// 3D is always assumed for vacancy and clusters
 
 #include "GGroup.h"
 #include<math.h>
@@ -19,6 +21,8 @@ InputParameters validParams<GGroup>()
   InputParameters params = validParams<GeneralUserObject>();
   MooseEnum GroupScheme("Uniform RSpace","Uniform");
   params.addRequiredParam<MooseEnum>("GroupScheme",GroupScheme, "Group method to use. Choices are: "+GroupScheme.getRawNames());
+  MooseEnum SIADim("1D 3D","3D");
+  params.addParam<MooseEnum>("SIAMotionDim",SIADim, "SIA motion dimension. Choices are: "+GroupScheme.getRawNames());
   params.addParam<Real>("dr_coef",0.2,"dr*(36*pi/Vatom)**(1./3) grouping size in r-space, eg. dr=1.0e-11m");
   params.addParam<int>("max_defect_v_size",0,"largest cluster size");
   params.addParam<int>("max_defect_i_size",0,"largest cluster size");
@@ -39,13 +43,10 @@ InputParameters validParams<GGroup>()
 GGroup::GGroup(const InputParameters & parameters) :
     GeneralUserObject(parameters),
     _GroupScheme(getParam<MooseEnum>("GroupScheme")),
+    _SIADim1D(getParam<MooseEnum>("SIAMotionDim")=="1D"?true:false),
     _dr_coef(getParam<Real>("dr_coef")),
-    _Ng_v(getParam<int>("number_v")),
-    _Ng_i(getParam<int>("number_i")),
     _num_v(getParam<int>("max_defect_v_size")),
     _num_i(getParam<int>("max_defect_i_size")),
-    _v_size(getParam<int>("max_mobile_v")),
-    _i_size(getParam<int>("max_mobile_i")),
     _single_v_group(getParam<int>("number_single_v")),
     _single_i_group(getParam<int>("number_single_i")),
     _T(isParamValid("temperature")?getParam<Real>("temperature"):0.0),
@@ -56,6 +57,10 @@ GGroup::GGroup(const InputParameters & parameters) :
 {
 
     _atomic_vol = _material->atomic_vol;
+    _Ng_v = getParam<int>("number_v");
+    _Ng_i = getParam<int>("number_i");
+    _v_size = getParam<int>("max_mobile_v");
+    _i_size = getParam<int>("max_mobile_i");
   // test input correctness
     if (!isParamValid("temperature") && !_T_func)
         mooseError("Temperature should be provided");
@@ -235,11 +240,13 @@ GGroup::setGroupConstant(){
     _emit_array.insert(std::make_pair(i,_material->emit(GroupScheme_v_avg[i-1],1,_T,"V","V",tagi,1)));
   }
  //consider sia cluster emission of a group if necessary
+ /*
   for(int i=1;i<=_Ng_i;i++){
     tagi = 0;
     if (i<=_i_size) tagi = 1;
     _emit_array.insert(std::make_pair(-i,_material->emit(GroupScheme_i_avg[i-1],1,_T,"I","I",tagi,1)));
   }
+  */
   
 //dislocation absorption coefs
   for(int i=1;i<=_v_size;i++)

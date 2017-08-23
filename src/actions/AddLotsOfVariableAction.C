@@ -51,7 +51,6 @@ InputParameters validParams<AddLotsOfVariableAction>()
   params.addParam<Real>("boundary_value", 0.0, "Specifies the initial condition for this variable");
   params.addParam<Real>("scaling", 1.0, "Specifies a scaling factor to apply to this variable");
   params.addParam<bool>("use_constIC",false,"Specifies whether use sinlge value for all variables as initial condition");
- // params.addParam<std::vector<SubdomainName> >("block", "The block id where this variable lives");
  // params.addParam<bool>("eigen", false, "True to make this variable an eigen variable");
   return params;
 }
@@ -69,6 +68,7 @@ AddLotsOfVariableAction::act()
   int number_i = getParam<int>("number_i");
   bool use_constIC = getParam<bool>("use_constIC");
   std::string _bc_type = getParam<std::string>("bc_type");
+
 
   if (_current_task == "add_variable")
   {

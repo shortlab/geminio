@@ -21,6 +21,7 @@
 #include "Conversion.h"
 #include "DirichletBC.h"
 #include "GMobile.h"
+#include "GMobile1D.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -42,8 +43,11 @@ InputParameters validParams<AddGMobile>()
   MooseEnum orders(AddVariableAction::getNonlinearVariableOrders());
 
   InputParameters params = validParams<AddVariableAction>();
+  MooseEnum SIADim("1D 3D","3D");
+  params.addParam<MooseEnum>("SIAMotionDim",SIADim, "SIA motion dimension. Choices are: "+SIADim.getRawNames());
   params.addRequiredParam<int>("number_v", "The number of vacancy variables to add");
   params.addRequiredParam<int>("number_i", "The number of interstitial variables to add");
+  params.addParam<std::string>("aux_prefix","Rlambda","aux variable name prefix");
   params.addRequiredParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
   params.addRequiredParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
   params.addRequiredParam<std::string>("group_constant", "user object name");
@@ -59,6 +63,8 @@ AddGMobile::AddGMobile(const InputParameters & params) :
 void
 AddGMobile::act()
 {
+  std::string dim = getParam<MooseEnum>("SIAMotionDim");
+
   int number_v = getParam<int>("number_v");
   int number_i = getParam<int>("number_i");
   int num_mobile_v = getParam<int>("max_mobile_v");
@@ -68,7 +74,9 @@ AddGMobile::act()
 
   std::vector<VariableName> coupled_v_vars;
   std::vector<VariableName> coupled_i_vars;
+  std::vector<VariableName> coupled_i_auxvars;
   std::string _prefix = name();
+  std::string aux_prefix = getParam<std::string>("aux_prefix");
   std::string var_name;
 
   for (int cur_num = 1; cur_num <= number_v; cur_num++)
@@ -87,10 +95,15 @@ AddGMobile::act()
     coupled_i_vars.push_back(var_name);
   }
 
-//first add mobile v
+  for (int cur_num = 1; cur_num <= num_mobile_i; cur_num++){
+    var_name = aux_prefix + Moose::stringify(cur_num);
+    coupled_i_auxvars.push_back(var_name);
+  }
+
+  //first add mobile v
   for(int cur_num=1; cur_num<=num_mobile_v; cur_num++){
     std::string var_name_v = name() +"0v"+ Moose::stringify(cur_num);
-    InputParameters params = _factory.getValidParams("GMobile");
+    InputParameters params = dim.compare("1D")? _factory.getValidParams("GMobile"):_factory.getValidParams("GMobile1D");
     params.set<NonlinearVariableName>("variable") = var_name_v;
     params.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
     params.set<std::vector<VariableName> > ("coupled_i_vars") = coupled_i_vars;
@@ -99,23 +112,28 @@ AddGMobile::act()
     params.set<int>("number_i") = number_i;
     params.set<int>("max_mobile_v") = num_mobile_v;
     params.set<int>("max_mobile_i") = num_mobile_i;
-    _problem->addKernel("GMobile", "GMobile_" + var_name_v+ "_" + Moose::stringify(counter), params);
+    if(dim.compare("1D")){//3D case
+      _problem->addKernel("GMobile", "GMobile_" + var_name_v+ "_" + Moose::stringify(counter), params);
+    }
+    else {
+      params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
+      _problem->addKernel("GMobile1D", "GMobile1D_" + var_name_v+ "_" + Moose::stringify(counter), params);
+    }
     //printf("add GMobile: %s \n",var_name_v.c_str());
     counter++;
 
-//add pesudo kernel for L1 coefficient
+    //add pesudo kernel for L1 coefficient
     var_name_v = name() +"1v"+ Moose::stringify(cur_num);
     InputParameters params1 = _factory.getValidParams("ConstantKernel");
     params1.set<NonlinearVariableName>("variable") = var_name_v;
     _problem->addKernel("ConstantKernel", "ConstantKernel_" + var_name_v+ "_" + Moose::stringify(counter), params1);
     counter++;
+  }    
     
-  }
-      
-//Second add mobile i
+  //Second add mobile i
   for(int cur_num=1; cur_num<=num_mobile_i; cur_num++){
     std::string var_name_i = name() +"0i"+ Moose::stringify(cur_num);
-    InputParameters params = _factory.getValidParams("GMobile");
+    InputParameters params = dim.compare("1D")? _factory.getValidParams("GMobile"):_factory.getValidParams("GMobile1D");
     params.set<NonlinearVariableName>("variable") = var_name_i;
     params.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
     params.set<std::vector<VariableName> > ("coupled_i_vars") = coupled_i_vars;
@@ -124,11 +142,17 @@ AddGMobile::act()
     params.set<int>("number_i") = number_i;
     params.set<int>("max_mobile_v") = num_mobile_v;
     params.set<int>("max_mobile_i") = num_mobile_i;
+    if(dim.compare("1D")){//3D case
     _problem->addKernel("GMobile", "GMobile_" + var_name_i+ "_" + Moose::stringify(counter), params);
+    }
+    else {
+      params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
+      _problem->addKernel("GMobile1D", "GMobile1D_" + var_name_i+ "_" + Moose::stringify(counter), params);
+    }
     //printf("add GMobile: %s \n",var_name_i.c_str());
     counter++;
 
-//add pesudo kernel for L1 coefficient
+    //add pesudo kernel for L1 coefficient
     var_name_i = name() +"1i"+ Moose::stringify(cur_num);
     InputParameters params1 = _factory.getValidParams("ConstantKernel");
     params1.set<NonlinearVariableName>("variable") = var_name_i;

@@ -74,6 +74,9 @@
 #include "GImmobileL0.h"
 #include "GImmobileL1.h"
 #include "GMobile.h"
+#include "GImmobileL01D.h"
+#include "GImmobileL11D.h"
+#include "GMobile1D.h"
 #include "ConstantKernel.h"
 //#####################Actions##############//
 #include "AddGVariable.h"
@@ -81,6 +84,7 @@
 #include "AddGMobile.h"
 #include "AddGTimeDerivative.h"
 #include "AddGConstantKernels.h"
+#include "AddReciprocalMeanFreePath1D.h"
 //#####################user objects##########//
 #include "GGroup.h"
 #include "GGroupTest.h"
@@ -88,6 +92,9 @@
 #include "GGroupingTest.h"
 #include "GIron.h"
 #include "GTungsten.h"
+#include "GTungsten1D.h"
+//#####################aux kernels##########//
+#include "ReciprocalMeanFreePath1D.h"
 /***************grouping method end*********************/
 
 
@@ -175,6 +182,9 @@ GeminioApp::registerObjects(Factory & factory)
   registerKernel(GMobile);
   registerKernel(GImmobileL0);
   registerKernel(GImmobileL1);
+  registerKernel(GMobile1D);
+  registerKernel(GImmobileL01D);
+  registerKernel(GImmobileL11D);
   registerKernel(ConstantKernel);
   //register userobjects
   registerUserObject(GGroup);
@@ -183,7 +193,9 @@ GeminioApp::registerObjects(Factory & factory)
   registerUserObject(GGroupingTest);
   registerUserObject(GIron);
   registerUserObject(GTungsten);
-
+  registerUserObject(GTungsten1D);
+  //auxkernels
+  registerAux(ReciprocalMeanFreePath1D);
 
 }
 
@@ -238,6 +250,7 @@ GeminioApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
   registerAction(AddGTimeDerivative,"add_kernel");
   registerAction(AddGConstantKernels,"add_kernel");
   registerAction(AddGVoidSwelling,"add_aux_kernel");
+  registerAction(AddReciprocalMeanFreePath1D,"add_aux_kernel");
   registerAction(AddGSumSIAClusterDensity,"add_aux_kernel");
 //syntax
   syntax.registerActionSyntax("AddGVariable","GVariable/*");
@@ -246,6 +259,7 @@ GeminioApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
   syntax.registerActionSyntax("AddGTimeDerivative", "GTimeDerivative/*");
   syntax.registerActionSyntax("AddGConstantKernels", "Sources/*");
   syntax.registerActionSyntax("AddGVoidSwelling", "GVoidSwelling/*");
+  syntax.registerActionSyntax("AddReciprocalMeanFreePath1D", "RecipMeanFreePath/*");
   syntax.registerActionSyntax("AddGSumSIAClusterDensity", "GSumSIAClusterDensity/*");
 
 }

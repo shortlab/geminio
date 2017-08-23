@@ -22,6 +22,8 @@
 #include "DirichletBC.h"
 #include "GImmobileL0.h"
 #include "GImmobileL1.h"
+#include "GImmobileL01D.h"
+#include "GImmobileL11D.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -43,8 +45,11 @@ InputParameters validParams<AddGImmobile>()
   MooseEnum orders(AddVariableAction::getNonlinearVariableOrders());
 
   InputParameters params = validParams<AddVariableAction>();
+  MooseEnum SIADim("1D 3D","3D");
+  params.addParam<MooseEnum>("SIAMotionDim",SIADim, "SIA motion dimension. Choices are: "+SIADim.getRawNames());
   params.addRequiredParam<int>("number_v", "The number of vacancy variables to add");
   params.addRequiredParam<int>("number_i", "The number of interstitial variables to add");
+  params.addParam<std::string>("aux_prefix","Rlambda","aux variable name prefix");
   params.addRequiredParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
   params.addRequiredParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
   params.addRequiredParam<std::string>("group_constant", "user object name");
@@ -60,6 +65,8 @@ AddGImmobile::AddGImmobile(const InputParameters & params) :
 void
 AddGImmobile::act()
 {
+  std::string dim = getParam<MooseEnum>("SIAMotionDim");
+
   int number_v = getParam<int>("number_v");
   int number_i = getParam<int>("number_i");
   int num_mobile_v = getParam<int>("max_mobile_v");
@@ -67,7 +74,14 @@ AddGImmobile::act()
   
   std::string uo = getParam<std::string>("group_constant");
   std::string _prefix = name();
+  std::string aux_prefix = getParam<std::string>("aux_prefix");
   std::string var_name;
+
+  std::vector<VariableName> coupled_i_auxvars;
+  for (int cur_num = 1; cur_num <= num_mobile_i; cur_num++){
+    var_name = aux_prefix + Moose::stringify(cur_num);
+    coupled_i_auxvars.push_back(var_name);
+  }
 
 //first add immobile v
   for(int cur_size=num_mobile_v+1; cur_size<=number_v; cur_size++){
@@ -113,7 +127,7 @@ AddGImmobile::act()
     } 
 
     var_name = name() +"0v"+ Moose::stringify(cur_size);
-    InputParameters params = _factory.getValidParams("GImmobileL0");
+    InputParameters params = dim.compare("1D")? _factory.getValidParams("GImmobileL0"):_factory.getValidParams("GImmobileL01D");
     params.set<NonlinearVariableName>("variable") = var_name;
     params.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
     params.set<std::vector<VariableName> > ("coupled_i_vars") = coupled_i_vars;
@@ -122,12 +136,18 @@ AddGImmobile::act()
     params.set<int>("number_i") = number_i;
     params.set<int>("max_mobile_v") = num_mobile_v;
     params.set<int>("max_mobile_i") = num_mobile_i;
-    _problem->addKernel("GImmobileL0", "GImmobileL0_" + var_name+ "_" + Moose::stringify(counter), params);
+    if(dim.compare("1D")){//3D case
+      _problem->addKernel("GImmobileL0", "GImmobileL0_" + var_name+ "_" + Moose::stringify(counter), params);
+    }
+    else {
+      params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
+      _problem->addKernel("GImmobileL01D", "GImmobileL01D_" + var_name+ "_" + Moose::stringify(counter), params);
+    }
     //printf("add GImmobileL0: %s \n",var_name.c_str());
     counter++;
 
     var_name = name() +"1v"+ Moose::stringify(cur_size);
-    InputParameters params1 = _factory.getValidParams("GImmobileL1");
+    InputParameters params1 = dim.compare("1D")? _factory.getValidParams("GImmobileL1"):_factory.getValidParams("GImmobileL11D");
     params1.set<NonlinearVariableName>("variable") = var_name;
     params1.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
     params1.set<std::vector<VariableName> > ("coupled_i_vars") = coupled_i_vars;
@@ -136,7 +156,13 @@ AddGImmobile::act()
     params1.set<int>("number_i") = number_i;
     params1.set<int>("max_mobile_v") = num_mobile_v;
     params1.set<int>("max_mobile_i") = num_mobile_i;
-    _problem->addKernel("GImmobileL1", "GImmobileL1_" + var_name+ "_" + Moose::stringify(counter), params1);
+    if(dim.compare("1D")){//3D case
+      _problem->addKernel("GImmobileL1", "GImmobileL1_" + var_name+ "_" + Moose::stringify(counter), params1);
+    }
+    else {
+      params1.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
+      _problem->addKernel("GImmobileL11D", "GImmobileL11D_" + var_name+ "_" + Moose::stringify(counter), params1);
+    }
     //printf("add GImmobileL1: %s \n",var_name.c_str());
     counter++;
 
@@ -187,7 +213,7 @@ AddGImmobile::act()
     } 
 
     std::string var_name_i = name() +"0i"+ Moose::stringify(cur_size);
-    InputParameters params = _factory.getValidParams("GImmobileL0");
+    InputParameters params = dim.compare("1D")? _factory.getValidParams("GImmobileL0"):_factory.getValidParams("GImmobileL01D");
     params.set<NonlinearVariableName>("variable") = var_name_i;
     params.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
     params.set<std::vector<VariableName> > ("coupled_i_vars") = coupled_i_vars;
@@ -196,12 +222,19 @@ AddGImmobile::act()
     params.set<int>("number_i") = number_i;
     params.set<int>("max_mobile_v") = num_mobile_v;
     params.set<int>("max_mobile_i") = num_mobile_i;
-    _problem->addKernel("GImmobileL0", "GImmobileL0_" + var_name_i+ "_" + Moose::stringify(counter), params);
+    if(dim.compare("1D")){//3D case
+      _problem->addKernel("GImmobileL0", "GImmobileL0_" + var_name_i+ "_" + Moose::stringify(counter), params);
+    }
+    else{
+      params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
+      _problem->addKernel("GImmobileL01D", "GImmobileL01D_" + var_name_i+ "_" + Moose::stringify(counter), params);
+    }
+
     //printf("add GImmobileL0: %s \n",var_name_i.c_str());
     counter++;
 
     var_name_i = name() +"1i"+ Moose::stringify(cur_size);
-    InputParameters params1 = _factory.getValidParams("GImmobileL1");
+    InputParameters params1 = dim.compare("1D")? _factory.getValidParams("GImmobileL1"):_factory.getValidParams("GImmobileL11D");
     params1.set<NonlinearVariableName>("variable") = var_name_i;
     params1.set<std::vector<VariableName> > ("coupled_v_vars") = coupled_v_vars;
     params1.set<std::vector<VariableName> > ("coupled_i_vars") = coupled_i_vars;
@@ -210,7 +243,13 @@ AddGImmobile::act()
     params1.set<int>("number_i") = number_i;
     params1.set<int>("max_mobile_v") = num_mobile_v;
     params1.set<int>("max_mobile_i") = num_mobile_i;
-    _problem->addKernel("GImmobileL1", "GImmobileL1_" + var_name_i+ "_" + Moose::stringify(counter), params1);
+    if(dim.compare("1D")){//3D case
+      _problem->addKernel("GImmobileL1", "GImmobileL1_" + var_name_i+ "_" + Moose::stringify(counter), params1);
+    }
+    else {
+      params1.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
+      _problem->addKernel("GImmobileL11D", "GImmobileL11D_" + var_name_i+ "_" + Moose::stringify(counter), params1);
+    }
     //printf("add GImmobileL1: %s \n",var_name_i.c_str());
     counter++;
 

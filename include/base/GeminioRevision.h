@@ -3,6 +3,6 @@
 #ifndef GEMINIO_REVISION_H
 #define GEMINIO_REVISION_H
 
-#define GEMINIO_REVISION "git commit f02b42f on 2017-04-12"
+#define GEMINIO_REVISION "git commit f6e8a82 on 2017-08-11"
 
 #endif // GEMINIO_REVISION_H
