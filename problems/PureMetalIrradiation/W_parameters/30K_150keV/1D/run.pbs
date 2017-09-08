@@ -23,6 +23,9 @@ module load use.moose moose-dev-gcc
 #source /home/jinmiao/.bashrc
 cd $PBS_O_WORKDIR 
 echo "Start: `date`"
-mpirun ~/projects/geminio-dev/Geminio-opt -i 30K_1D.i
+#mpirun ~/projects/geminio-dev/Geminio-opt -i 30K_3D.i
+#mpirun ~/projects/geminio-dev/Geminio-opt -i 30K_1D.i
+#mpirun ~/projects/geminio-dev/Geminio-opt -i 30K_1D_simplify.i
+./run.sh
 echo "End: `date`"
 

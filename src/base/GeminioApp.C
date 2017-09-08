@@ -91,6 +91,7 @@
 #include "GMaterialConstants.h"
 #include "GGroupingTest.h"
 #include "GIron.h"
+#include "GIron1D.h"
 #include "GTungsten.h"
 #include "GTungsten1D.h"
 //#####################aux kernels##########//
@@ -192,6 +193,7 @@ GeminioApp::registerObjects(Factory & factory)
   registerUserObject(GMaterialConstants);
   registerUserObject(GGroupingTest);
   registerUserObject(GIron);
+  registerUserObject(GIron1D);
   registerUserObject(GTungsten);
   registerUserObject(GTungsten1D);
   //auxkernels

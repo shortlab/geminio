@@ -1,7 +1,8 @@
 
 
-/****** This implements 1D movement of SIA clusters (n>=2) ******/
+/****** This implements 1D movement of SIA clusters (n>=1) ******/
 //reference: Cluster Dynamics Models of Irradiation Damage Accumulation in Ferritic Iron Part II: Effects of Reaction Dimensionality
+//NOTE: normally n=1 would be 3D. However, in tungsten case, rotation barrier is very high (0.4eV). Probability of rotation is very low at 30K.
 
 #include "MooseMesh.h"
 #include "GTungsten1D.h"

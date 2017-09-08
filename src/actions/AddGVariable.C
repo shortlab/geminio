@@ -42,7 +42,8 @@ InputParameters validParams<AddGVariable>()
   MooseEnum orders(AddVariableAction::getNonlinearVariableOrders());
 
   InputParameters params = validParams<AddVariableAction>();
-
+  MooseEnum SIADim("1D 3D","3D");
+  params.addParam<MooseEnum>("SIAMotionDim",SIADim, "SIA motion dimension. Choices are: "+SIADim.getRawNames());
   params.addRequiredParam<int>("number_v", "Total number of vacancy group to add");
   params.addRequiredParam<int>("number_i", "Total number of interstitial group to add");
 
@@ -70,6 +71,7 @@ AddGVariable::AddGVariable(const InputParameters & params) :
 void
 AddGVariable::act()
 {
+  std::string dim = getParam<MooseEnum>("SIAMotionDim");
   int number_v = getParam<int>("number_v");
   int number_i = getParam<int>("number_i");
   std::vector<int> vv = getParam<std::vector<int> >("IC_v_size");
@@ -89,7 +91,7 @@ AddGVariable::act()
   FEFamily family = LAGRANGE;
   FEType fe_type(order, family);
 
-  if (_current_task == "add_variable")//add aux_variable
+  if (!dim.compare("1D") && _current_task == "add_variable")//add aux_variable for 1D case
   {
     std::string var_name;
     for(int i=1;i<=num_aux;i++){
