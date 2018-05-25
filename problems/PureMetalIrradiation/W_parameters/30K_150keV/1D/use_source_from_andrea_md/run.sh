@@ -1,5 +1,4 @@
 
-: << 'END'
 ######### directory 0.0125dpaPerS
 dir=0.0125dpaPerS
 cd ${dir}
@@ -30,7 +29,6 @@ do
 done
 cd ..
 
-END
 
 ######### directory 1.0dpa
 dir=1.0dpa

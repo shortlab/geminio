@@ -15,7 +15,7 @@
 #define Vatom 1.165e-11 //iron atom volume um^3
 #define Burgers 2.4734e-4 //burgers vector (um) (sqrt(3)/2*a0)
 #define Boltz_const 8.6173315e-5 //boltzmann constant eV/K
-#define R0 3.3e-4 //um capture radius term
+#define Rvi 3.3e-4 //um capture radius term
 
 /*** reference: Influence of the picosecond defect distribution on damage accumulation in irradiated α-Fe ***/
 
@@ -54,7 +54,7 @@ void GIron1D::finalize()
 
 double GIron1D::energy(int s,std::string species, std::string Etype) const{//unit:eV
     double E=0.0;
-    double dE=0.50;//shift value for vacancy migration energies
+    double dE=0.0;//shift value for vacancy migration energies
     double idE= 0.0;//shift value for interstitial migration energies
     if ((species == "V") && (Etype == "migration")){
         switch(s){
@@ -64,12 +64,12 @@ double GIron1D::energy(int s,std::string species, std::string Etype) const{//uni
             case 2:
                 E = 0.62 + dE;
                 break;
-           // case 3:
-           //     E = 0.35 + dE;
-           //     break;
-           // case 4:
-           //     E = 0.48 + dE;
-           //     break;
+            case 3:
+                E = 0.35 + dE;
+                break;
+            case 4:
+                E = 0.48 + dE;
+                break;
             default:
                 E = INF;
         }
@@ -77,24 +77,31 @@ double GIron1D::energy(int s,std::string species, std::string Etype) const{//uni
         //    E = 0.48 + dE;
     }
     else if ((species == "I") && (Etype == "migration")){
+        /*
         switch(s){
             case 1:
-                E = 0.34 + idE;
+                //E = 0.34 + idE;
+                E = 0.04 + idE;
                 break;
             case 2:
-                E = 0.42 + idE;
+                //E = 0.42 + idE;
+                E = 0.04 + idE;
                 break;
             case 3:
-                E = 0.43 + idE;
+                //E = 0.43 + idE;
+                E = 0.04 + idE;
                 break;
             case 4:
-                E = 0.43 + idE;
+                //E = 0.43 + idE;
+                E = 0.04 + idE;
                 break;
             default:
                 E = INF;
         }
-        //if ( s>4 && s<=20)//added for test of SIA mobility
-        //     E = 0.43;
+        */
+        E = INF;
+        if (s<=10)//added for test of SIA mobility
+            E = 0.17;
     }
     else if ((species == "V") && (Etype == "binding")){
         switch(s){
@@ -147,8 +154,10 @@ double GIron1D::D_prefactor(int s, std::string species) const{
 //vv reaction; flag=0: both immobile; flag=1: first mobile; flag=2: second mobile; flag=3: both mobile
 double GIron1D::absorbVV(int S1, int S2, int flag, double T) const{
     double result = 0.0;
-    double r1 = _v_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3)+R0); //cluster effective radius
-    double r2 = _v_bias*(std::pow(S2*Vatom*3/4/PI,1.0/3)+R0); //cluster effective radius
+    double r1 = _v_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3)); //cluster effective radius
+    double r2 = _v_bias*(std::pow(S2*Vatom*3/4/PI,1.0/3)); //cluster effective radius
+    //double r1 = _v_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3)+Rvi); //cluster effective radius
+    //double r2 = _v_bias*(std::pow(S2*Vatom*3/4/PI,1.0/3)+Rvi); //cluster effective radius
     switch(flag){
         case 1:
         {
@@ -177,14 +186,13 @@ double GIron1D::absorbVV(int S1, int S2, int flag, double T) const{
 double GIron1D::absorbVI(int S1, int S2, int flag, double T) const{
     double result = 0.0;
     double r1 = _v_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3));
-   // double r2 = _i_bias*(std::pow(S2*Vatom*3/4/PI,1.0/3)+R0);
     double r2 = _i_bias*(std::pow(S2*Vatom/Burgers/PI,1.0/2)); //cluster effective radius: loop
     if (flag == 1){
         double D_s1 = D_prefactor(S1,"V")*exp(-energy(S1,"V","migration")/Boltz_const/T);
         result = 4.0*PI*D_s1*(r1+r2);
     }
     else if (flag = 2 || flag ==3){//mobile 1D SIA (dominate); need add additional coefficient to be reaction coefficient k_i,j
-        result = PI*pow(r1+r2+R0,2);
+        result = PI*pow(r1+r2+Rvi,2);
     }
     return result;
 }
@@ -194,12 +202,10 @@ double GIron1D::absorbII(int S1, int S2, int flag, double T) const{
     double result = 0.0;
     double r1 = _i_bias*(std::pow(S1*Vatom/Burgers/PI,1.0/2)); //cluster effective radius
     double r2 = _i_bias*(std::pow(S2*Vatom/Burgers/PI,1.0/2)); //cluster effective radius
-    //double r1 = _i_bias*(std::pow(S1*Vatom*3/4/PI,1.0/3)+R0);
-    //double r2 = _i_bias*(std::pow(S2*Vatom*3/4/PI,1.0/3)+R0);
-    if (r1+r2<R0)
-       result = PI*pow(r1+r2+R0,2);
+    if (r1+r2<Rvi)
+       result = PI*pow(r1+r2+Rvi,2);
     else
-       result = PI*pow(r1+r2+R0,2)-PI*pow(r1+r2-R0,2);
+       result = PI*pow(r1+r2+Rvi,2)-PI*pow(r1+r2-Rvi,2);
     return result;
 }
 

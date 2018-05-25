@@ -60,10 +60,10 @@
 
 [Sources]
   [./groups]
-    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17'
-    source_v_value = '287571929 87265746 33890565 17504954 10147668 4276530 3516732 2767298 1047524 785346 677338 284194 146631 57330 21322 94918 21322'
-    source_i_size = '1 2 3 4 5 6 7 8 9 10'
-    source_i_value = '627673201 55872900 10429603 2427409 700564 522434 306630 20129 67260 3231'
+    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14'
+    source_v_value = '365210142 82239663 32738137 14319547 6722813 4204403 2056701 1121792 451358 792377 473462 172717 151703 97659'
+    source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14'
+    source_i_value = '478650042 78370788 23077803 8080072 3829216 1970947 1145823 511920 111074 464243 203962 8690 117291 32287'
     scaling_factor = 1.0 
   [../]
 []
@@ -71,19 +71,6 @@
 [RecipMeanFreePath]
   [./groups]
     group_constant = group_constant
-  [../]
-[]
-
-[AuxVariables]
-  [./SIA_density]
-  [../]
-[]
-[GSumSIAClusterDensity]
-#sum up of SIA cluster density in range [lower_bound,upper_bound]
-  [./groups]
-    aux_var = SIA_density 
-    group_constant = group_constant
-    lower_bound = 2
   [../]
 []
 
@@ -116,11 +103,6 @@
     nodeid = 1
     variable = groups0i1
   [../]
-  [./SIADensity]
-    type = NodalVariableValue
-    nodeid = 1
-    variable = SIA_density 
-  [../]
 []
 
 
@@ -150,10 +132,10 @@
   l_tol =  1e-8
   num_steps = 500
   start_time = 0
-  end_time = 80.0
+  end_time = 1.116
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 0.5
+  dtmax = 0.01
   active = 'TimeStepper'
   [./TimeStepper]
       cutback_factor = 0.4

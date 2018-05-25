@@ -47,8 +47,9 @@ InputParameters validParams<AddLotsOfSource>()
   params.addRequiredParam<std::vector<Real> >("source_i_size", "A vector of distribution of creation along ion range");
   params.addParam<std::string>("func_pre_name", "the sub-block name of [functions]");
   params.addParam<bool>("custom_input",false,"true: use mannully input coefficients");
-  params.addParam<std::vector<Real> >("source_i", "production of i clusters for source_i_size species");
-  params.addParam<std::vector<Real> >("source_v", "production of v clusters for 1 source_v_size species"); //!!!if provided source_i or source_v (constant for each size), the function wouldn't be necessary. In other words, provide either function or source_i and source_v
+  params.addParam<std::vector<Real> >("source_i_value", "production of i clusters for source_i_size species");
+  params.addParam<std::vector<Real> >("source_v_value", "production of v clusters for 1 source_v_size species"); //!!!if provided source_i or source_v (constant for each size), the function wouldn't be necessary. In other words, provide either function or source_i and source_v
+  params.addParam<Real>("scaling_factor",1.0,"scaling_factor to multiply the value");
   return params;
 }
 
@@ -63,12 +64,13 @@ AddLotsOfSource::act()
 {
   std::vector<Real> v_size = getParam<std::vector<Real> >("source_v_size");
   std::vector<Real> i_size = getParam<std::vector<Real> >("source_i_size");
-  std::vector<Real> vv = getParam<std::vector<Real> >("source_v");
-  std::vector<Real> ii = getParam<std::vector<Real> >("source_i");
+  std::vector<Real> vv = getParam<std::vector<Real> >("source_v_value");
+  std::vector<Real> ii = getParam<std::vector<Real> >("source_i_value");
   bool custom = getParam<bool>("custom_input");
   //unsigned int _total_v = getParam<unsigned int>("number_v");
   //unsigned int _total_i = getParam<unsigned int>("number_i");
   std::string func_pre_name = (isParamValid("func_pre_name") ? getParam<std::string>("func_pre_name") : "");
+  Real scaling = getParam<Real>("scaling_factor");
 
 
   for (unsigned int cur_num = 1; cur_num <= v_size.size(); cur_num++)
@@ -80,11 +82,11 @@ AddLotsOfSource::act()
     params.set<NonlinearVariableName>("variable") = var_name_v;
     if (!custom){
       params.set<FunctionName>("function") = fun_name_v;
-      params.set<Real>("value") = 1.0;
+      params.set<Real>("value") = scaling;
     }
     else if (vv.size() != v_size.size())
       mooseError("Vacancy source number should be the same with provided variables");
-    else params.set<Real>("value") = vv[cur_num-1];//Should be the production term of current size, gain should be negative in the kernel
+    else params.set<Real>("value") = vv[cur_num-1]*scaling;//Should be the production term of current size, gain should be negative in the kernel
     _problem->addKernel("BodyForce", "bodyforce_" +  var_name_v + Moose::stringify(counter), params);
     //printf("add Source: %s with function %s\n",var_name_v.c_str(),fun_name_v.c_str());
     counter++;
@@ -99,11 +101,11 @@ AddLotsOfSource::act()
     params.set<NonlinearVariableName>("variable") = var_name_i;
     if (!custom){
       params.set<FunctionName>("function") = fun_name_i;
-      params.set<Real>("value") = 1.0;
+      params.set<Real>("value") = scaling;
     }
     else if (ii.size() != i_size.size())
       mooseError("Intersitial source number should be the same with provided variable");
-    else params.set<Real>("value") = ii[cur_num-1];// gain should be negative in the kernel
+    else params.set<Real>("value") = ii[cur_num-1]*scaling;// gain should be negative in the kernel
     _problem->addKernel("BodyForce", "bodyforce_"+ var_name_i+ Moose::stringify(counter), params);
     //printf("add Source: %s with function %s\n",var_name_i.c_str(),fun_name_i.c_str());
     counter++;

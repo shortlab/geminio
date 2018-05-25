@@ -4,12 +4,12 @@
 [GlobalParams]
 #set the largest size for vacancy clusters and interstitial clusters. Also defined in blocks to be clearer.
 
-  number_v = 50    #number of vacancy variables i.e. total_groups
-  number_single_v = 20  #max size with group size 1
+  number_v = 150    #number of vacancy variables i.e. total_groups
+  number_single_v = 101  #max size with group size 1
   max_mobile_v = 1
 
-  number_i = 200      #number of interstitial variables, set to 0
-  number_single_i = 45  #max size with group size 1
+  number_i = 250      #number of interstitial variables, set to 0
+  number_single_i = 101  #max size with group size 1
   max_mobile_i = 5
 
   temperature = 30  #temperature [K]
@@ -60,30 +60,17 @@
 
 [Sources]
   [./groups]
-    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17'
-    source_v_value = '287571929 87265746 33890565 17504954 10147668 4276530 3516732 2767298 1047524 785346 677338 284194 146631 57330 21322 94918 21322'
-    source_i_size = '1 2 3 4 5 6 7 8 9 10'
-    source_i_value = '627673201 55872900 10429603 2427409 700564 522434 306630 20129 67260 3231'
-    scaling_factor = 1.0 
+    source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50'
+    source_i_value = '239836283 45440478 17172118 8609360 5039493 3253508 2247395 1631168 1229512 1464255 1233417 1054607 913101 799073 705752 628349 563389 508307 461169 420497 385143 354206 326969 302856 281400 262219 244997 229473 215427 202674 191058 180445 170722 161791 153565 145972 138948 132436 126386 120756 115506 110603 106016 101719 97686 93897 90331 86972 83803 80811'
+    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50'
+    source_v_value = '450394700 56299337 16681285 7037417 3603157 2085160 1313104 879677 617825 445669 379005 326892 285304 251533 223695 200451 180821 164077 149668 137170 126252 116652 108162 100612 93867 87812 82355 77418 72935 68850 65117 61696 58551 55654 52978 50500 48202 46066 44076 42219 40483 38858 37335 35904 34558 33290 32095 30967 29900 28891'
+    scaling_factor = 0.5
   [../]
 []
 
 [RecipMeanFreePath]
   [./groups]
     group_constant = group_constant
-  [../]
-[]
-
-[AuxVariables]
-  [./SIA_density]
-  [../]
-[]
-[GSumSIAClusterDensity]
-#sum up of SIA cluster density in range [lower_bound,upper_bound]
-  [./groups]
-    aux_var = SIA_density 
-    group_constant = group_constant
-    lower_bound = 2
   [../]
 []
 
@@ -116,11 +103,6 @@
     nodeid = 1
     variable = groups0i1
   [../]
-  [./SIADensity]
-    type = NodalVariableValue
-    nodeid = 1
-    variable = SIA_density 
-  [../]
 []
 
 
@@ -150,10 +132,10 @@
   l_tol =  1e-8
   num_steps = 500
   start_time = 0
-  end_time = 80.0
+  end_time = 1.116
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 0.5
+  dtmax = 0.01
   active = 'TimeStepper'
   [./TimeStepper]
       cutback_factor = 0.4

@@ -1,0 +1,34 @@
+#!/bin/bash
+#######################################
+# Specify nodes, processors per node,
+# and maximum running time
+#######################################
+#PBS -N RUN0
+
+#PBS -l select=1:ncpus=20:mpiprocs=20
+#PBS -l walltime=72:00:00
+#PBS -q general 
+#PBS -P ldrd
+##PBS -m e
+##PBS -M miaomiaojin1992@gmail.com
+###PBS -o 'qsub1.out'
+###PBS -e 'qsub1.err'
+#######################################
+# Enter directory and set PATH
+#######################################
+#export LD_LIBRARY_PATH=/opt/openmpi-1.6.5/lib:$LD_LIBRARY_PATH
+#PATH=$PBS_O_PATH
+
+module load use.moose moose-dev-gcc
+#source /home/jinmiao/.bashrc
+cd $PBS_O_WORKDIR 
+echo "Start: `date`"
+max_mobile_i=4
+disl=50
+isInject=noinject
+for max_mobile_v in 4 ; do
+  #mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_1D.i UserObjects/material/dislocation=${disl} GlobalParams/max_mobile_v=${max_mobile_v} GlobalParams/max_mobile_i=${max_mobile_i} Outputs/file_base=Fe_1D_scale1.0_Emv0.67eV_Emi0.17eV_disl${disl}_iMobile${max_mobile_i}_vMobile${max_mobile_v}_${isInject}_out
+  mpirun /home/jinmiao/projects/geminio-dev/Geminio-opt -i Fe_3D.i UserObjects/material/dislocation=${disl} GlobalParams/max_mobile_v=${max_mobile_v} GlobalParams/max_mobile_i=${max_mobile_i} Outputs/file_base=Fe_3D_Emv0.67eV_Emi0.17eV_disl${disl}_iMobile${max_mobile_i}_vMobile${max_mobile_v}_${isInject}_out
+done
+echo "End: `date`"
+

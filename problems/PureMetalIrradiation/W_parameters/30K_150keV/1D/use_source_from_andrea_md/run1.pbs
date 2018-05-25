@@ -1,0 +1,41 @@
+#!/bin/bash
+#######################################
+# Specify nodes, processors per node,
+# and maximum running time
+#######################################
+#PBS -N W1D
+
+#PBS -l select=1:ncpus=10:mpiprocs=10
+#PBS -l walltime=72:00:00
+#PBS -q general 
+#PBS -P ldrd
+##PBS -m e
+##PBS -M miaomiaojin1992@gmail.com
+###PBS -o 'qsub1.out'
+###PBS -e 'qsub1.err'
+#######################################
+# Enter directory and set PATH
+#######################################
+#export LD_LIBRARY_PATH=/opt/openmpi-1.6.5/lib:$LD_LIBRARY_PATH
+#PATH=$PBS_O_PATH
+
+module load use.moose moose-dev-gcc
+#source /home/jinmiao/.bashrc
+cd $PBS_O_WORKDIR 
+echo "Start: `date`"
+######### directory 0.0125dpaPerS
+dir=0.0125dpaPerS
+cd ${dir}
+#mobiles=(3 5 6 7 8 10 15)
+maxsize=(20 50 100 150)
+mobiles=(10 30)
+for size in ${mobiles[@]};
+do
+  for max in ${maxsize[@]};
+  do
+    mpirun ~/projects/geminio-dev/Geminio-opt -i 30K_1D_MaxSource${max}.i GlobalParams/max_mobile_i=${size} Outputs/file_base=30K_1D_mobile${size}_maxsize${max}_out
+  done
+done
+cd ..
+echo "End: `date`"
+

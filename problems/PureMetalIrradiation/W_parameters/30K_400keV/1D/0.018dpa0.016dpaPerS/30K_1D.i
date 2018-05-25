@@ -1,4 +1,5 @@
 #UNITS: um,s,/um^3
+#consider only vacancy cluster for tungsten
 # implement grouping method
 
 [GlobalParams]
@@ -10,7 +11,7 @@
 
   number_i = 200      #number of interstitial variables, set to 0
   number_single_i = 45  #max size with group size 1
-  max_mobile_i = 5
+  max_mobile_i = 6
 
   temperature = 30  #temperature [K]
   SIAMotionDim = 1D
@@ -61,29 +62,16 @@
 [Sources]
   [./groups]
     source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17'
-    source_v_value = '287571929 87265746 33890565 17504954 10147668 4276530 3516732 2767298 1047524 785346 677338 284194 146631 57330 21322 94918 21322'
-    source_i_size = '1 2 3 4 5 6 7 8 9 10'
-    source_i_value = '627673201 55872900 10429603 2427409 700564 522434 306630 20129 67260 3231'
-    scaling_factor = 1.0 
+    source_v_value = '394573933 113036859 43710916 21593542 12573489 5635020 3853152 2965925 1099794 815541 688571 298666 134793 63005 36210 91473 36210'
+    source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 15 41'
+    source_i_value = '777485850 76027495 16160869 4468222 1320441 932708 599015 206499 198624 62118 34455 68880 68880 34455'
+    scaling_factor = 1.0
   [../]
 []
 
 [RecipMeanFreePath]
   [./groups]
     group_constant = group_constant
-  [../]
-[]
-
-[AuxVariables]
-  [./SIA_density]
-  [../]
-[]
-[GSumSIAClusterDensity]
-#sum up of SIA cluster density in range [lower_bound,upper_bound]
-  [./groups]
-    aux_var = SIA_density 
-    group_constant = group_constant
-    lower_bound = 2
   [../]
 []
 
@@ -116,11 +104,6 @@
     nodeid = 1
     variable = groups0i1
   [../]
-  [./SIADensity]
-    type = NodalVariableValue
-    nodeid = 1
-    variable = SIA_density 
-  [../]
 []
 
 
@@ -150,10 +133,10 @@
   l_tol =  1e-8
   num_steps = 500
   start_time = 0
-  end_time = 80.0
+  end_time = 1.116
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 0.5
+  dtmax = 0.01
   active = 'TimeStepper'
   [./TimeStepper]
       cutback_factor = 0.4

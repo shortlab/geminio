@@ -41,8 +41,10 @@ InputParameters validParams<AddUserObjectDiffusion>()
   MooseEnum families(AddVariableAction::getNonlinearVariableFamilies());
   MooseEnum orders(AddVariableAction::getNonlinearVariableOrders());
   InputParameters params = validParams<AddVariableAction>();
-  params.addRequiredParam<std::vector<int> >("mobile_v_size", "A vector of mobile species");
-  params.addRequiredParam<std::vector<int> >("mobile_i_size", "A vector of mobile species");
+  //params.addRequiredParam<std::vector<int> >("mobile_v_size", "A vector of mobile species");
+  //params.addRequiredParam<std::vector<int> >("mobile_i_size", "A vector of mobile species");
+  params.addRequiredParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
+  params.addRequiredParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
   params.addRequiredParam<std::string>("group_constant", "user object name");
   return params;
 }
@@ -56,12 +58,12 @@ AddUserObjectDiffusion::AddUserObjectDiffusion(const InputParameters & params) :
 void
 AddUserObjectDiffusion::act()
 {
-  std::vector<int> v_size = getParam<std::vector<int> >("mobile_v_size");
-  std::vector<int> i_size = getParam<std::vector<int> >("mobile_i_size");
+  int num_mobile_v = getParam<int>("max_mobile_v");
+  int num_mobile_i = getParam<int>("max_mobile_i");
   std::string uo = getParam<std::string>("group_constant");
   
-  for(int cur_num=1;cur_num<=v_size.size();cur_num++){
-    std::string var_name_v = name() +"v"+ Moose::stringify(v_size[cur_num-1]);//add kernel for mobile v
+  for(int cur_num=1;cur_num<=num_mobile_v;cur_num++){
+    std::string var_name_v = name() +"v"+ Moose::stringify(cur_num);//add kernel for mobile v
     InputParameters params = _factory.getValidParams("UserObjectDiffusion");
     params.set<NonlinearVariableName>("variable") = var_name_v;
     params.set<UserObjectName>("user_object") = uo;
@@ -70,8 +72,8 @@ AddUserObjectDiffusion::act()
     counter++;
   }
 
-  for(int cur_num=1;cur_num<=i_size.size();cur_num++){
-    std::string var_name_i = name() +"i"+ Moose::stringify(i_size[cur_num-1]);//add kernel for mobile i
+  for(int cur_num=1;cur_num<=num_mobile_i;cur_num++){
+    std::string var_name_i = name() +"i"+ Moose::stringify(cur_num);//add kernel for mobile i
     InputParameters params = _factory.getValidParams("UserObjectDiffusion");
     params.set<NonlinearVariableName>("variable") = var_name_i;
     params.set<UserObjectName>("user_object") = uo;

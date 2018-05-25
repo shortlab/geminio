@@ -4,12 +4,12 @@
 [GlobalParams]
 #set the largest size for vacancy clusters and interstitial clusters. Also defined in blocks to be clearer.
 
-  number_v = 50    #number of vacancy variables i.e. total_groups
-  number_single_v = 20  #max size with group size 1
+  number_v = 250    #number of vacancy variables i.e. total_groups
+  number_single_v = 170  #max size with group size 1
   max_mobile_v = 1
 
-  number_i = 200      #number of interstitial variables, set to 0
-  number_single_i = 45  #max size with group size 1
+  number_i = 250      #number of interstitial variables, set to 0
+  number_single_i = 105  #max size with group size 1
   max_mobile_i = 5
 
   temperature = 30  #temperature [K]
@@ -60,10 +60,10 @@
 
 [Sources]
   [./groups]
-    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17'
-    source_v_value = '287571929 87265746 33890565 17504954 10147668 4276530 3516732 2767298 1047524 785346 677338 284194 146631 57330 21322 94918 21322'
-    source_i_size = '1 2 3 4 5 6 7 8 9 10'
-    source_i_value = '627673201 55872900 10429603 2427409 700564 522434 306630 20129 67260 3231'
+    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 22 23 24 25 26 29 30 32 34 55 75 103 162'
+    source_v_value = '359696875 80998162 32243913 14103380 6621321 4140927 2025654 1104862 444548 780417 466321 170110 149420 96190 23202 49319 2844 68848 140746 46475 28898 48490 46475 2844 2844 26046 2844 2844 2844 2844 2844'
+    source_i_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 24 25 27 30 31 36 38 48 65 96 100'
+    source_i_value = '470825874 77089708 22700571 7948000 3766625 1938731 1127093 503553 109257 456651 200628 8547 115379 31758 45669 117528 52195 2844 48513 68880 52195 45669 2844 26062 23210 28914 2844 46499 2844 2844 2844 2844 2844'
     scaling_factor = 1.0 
   [../]
 []
@@ -71,19 +71,6 @@
 [RecipMeanFreePath]
   [./groups]
     group_constant = group_constant
-  [../]
-[]
-
-[AuxVariables]
-  [./SIA_density]
-  [../]
-[]
-[GSumSIAClusterDensity]
-#sum up of SIA cluster density in range [lower_bound,upper_bound]
-  [./groups]
-    aux_var = SIA_density 
-    group_constant = group_constant
-    lower_bound = 2
   [../]
 []
 
@@ -116,11 +103,6 @@
     nodeid = 1
     variable = groups0i1
   [../]
-  [./SIADensity]
-    type = NodalVariableValue
-    nodeid = 1
-    variable = SIA_density 
-  [../]
 []
 
 
@@ -150,10 +132,10 @@
   l_tol =  1e-8
   num_steps = 500
   start_time = 0
-  end_time = 80.0
+  end_time = 1.116
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 0.5
+  dtmax = 0.01
   active = 'TimeStepper'
   [./TimeStepper]
       cutback_factor = 0.4

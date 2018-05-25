@@ -1,18 +1,23 @@
 #UNITS: um,s,/um^3
+#IRON
 # implement grouping method
 
 [GlobalParams]
 #set the largest size for vacancy clusters and interstitial clusters. Also defined in blocks to be clearer.
 
-  number_v = 50    #number of vacancy variables i.e. total_groups
-  number_single_v = 20  #max size with group size 1
-  max_mobile_v = 1
+  number_v = 150    #number of vacancy variables i.e. total_groups
+  number_single_v = 52  #max size with group size 1
+  max_mobile_v = 4
 
-  number_i = 200      #number of interstitial variables, set to 0
-  number_single_i = 45  #max size with group size 1
-  max_mobile_i = 5
+  number_i = 150      #number of interstitial variables, set to 0
+  number_single_i = 52  #max size with group size 1
+  max_mobile_i = 4
 
-  temperature = 30  #temperature [K]
+  temperature = 723  #temperature [K]
+  source_v_size = '1 2 3 4 5 6 7 8 9 10' 
+#'1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 '
+  source_i_size = '1 2 3 4 5 6 7 8 9 10'
+#'1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 '
   SIAMotionDim = 1D
   aux_prefix = rLambda
 []
@@ -20,17 +25,17 @@
 [Mesh]
   type = GeneratedMesh
   xmin = 0
-  xmax = 1 #uniform source for simplicity, no spatical dependence
+  xmax = 1.6 #uniform source for simplicity, no spatical dependence
   dim = 1
-  nx = 2
+  nx = 50
 []
 
 # define defect variables, set variables and boundadry condition as 0 where appropriate
 [GVariable]
   [./groups]
-#    boundary_value = 0.0
+    boundary_value = 0.0
     scaling = 1.0  #important factor, crucial to converge
-    bc_type = neumann
+    bc_type = dirichlet
     #IC_v_size = '1 2 3 4'
     #IC_v = '2000.0 4000.0 1000.0 250.0' #'3.9            2.323' #thermal equil
     IC_v_size = ''
@@ -41,6 +46,10 @@
   [../]
 []
 
+[AuxVariables]
+  [./void_swelling]
+  [../]
+[]
 [GTimeDerivative]
   [./groups]
   [../]
@@ -58,13 +67,30 @@
   [../]
 []
 
-[Sources]
-  [./groups]
-    source_v_size = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17'
-    source_v_value = '287571929 87265746 33890565 17504954 10147668 4276530 3516732 2767298 1047524 785346 677338 284194 146631 57330 21322 94918 21322'
-    source_i_size = '1 2 3 4 5 6 7 8 9 10'
-    source_i_value = '627673201 55872900 10429603 2427409 700564 522434 306630 20129 67260 3231'
-    scaling_factor = 1.0 
+[LotsOfFunction]
+  [./func_defect_] 
+#for now only 1D, and data file should be in column, postion+v_size+i_size; defectsi1 should include injected interstitials. Make sure unit is in um^3 or um
+#data should be the same with [sources] block and the sub_block name [func_defect_]
+    type = PiecewiseLinearTimeLimit
+    tlimit = 2.0e8 #limit the time with sources [s]
+    data_file = spatial_defect_cluster_production_powerlaw_v10i10.txt
+    axis = 0 #x axis
+    format = columns
+    scale_factor = 1.0e-2 #efficiency
+  [../]
+[]
+[LotsOfSource]
+  [./groups0] 
+#attention to this: add 0 after defects for L0 term
+    func_pre_name = func_defect_
+    # either provide data file to construct functions or direct input of constant source for each size.
+  [../]
+[]
+
+[LotsOfUserObjectDiffusion]
+  [./groups0]
+#attention to this: add 0 after defects for L0 term
+    group_constant = group_constant
   [../]
 []
 
@@ -74,34 +100,31 @@
   [../]
 []
 
-[AuxVariables]
-  [./SIA_density]
-  [../]
-[]
-[GSumSIAClusterDensity]
-#sum up of SIA cluster density in range [lower_bound,upper_bound]
-  [./groups]
-    aux_var = SIA_density 
-    group_constant = group_constant
-    lower_bound = 2
-  [../]
-[]
-
 [UserObjects]
   [./material]
-    type = GTungsten1D   #definition should be in front of the usage
+    type = GIron1D   #definition should be in front of the usage
     i_disl_bias = 1.15
     v_disl_bias = 1.0
-    dislocation = 1 #dislocation density 1.0 /um^2
+    dislocation = 100 #dislocation density 1.0 /um^2
   [../]
 
   [./group_constant]
     type = GGroup
     material = 'material'
     GroupScheme = RSpace
+    SIAMotionDim = 1D
     dr_coef = 0.5
     update = false
     execute_on = initial
+  [../]
+[]
+
+[GVoidSwelling]
+  [./groups]
+    aux_var = void_swelling
+    group_constant = group_constant
+    #lower_bound = 152 #1.5nm in diameter
+    lower_bound = 360 #2.0nm in diameter
   [../]
 []
 
@@ -115,11 +138,6 @@
     type = NodalVariableValue
     nodeid = 1
     variable = groups0i1
-  [../]
-  [./SIADensity]
-    type = NodalVariableValue
-    nodeid = 1
-    variable = SIA_density 
   [../]
 []
 
@@ -148,12 +166,12 @@
   nl_abs_tol=  1e-10  #Question: why change to 1e-12 not work!!!
   nl_rel_tol =  1e-7
   l_tol =  1e-8
-  num_steps = 500
+  num_steps = 1000
   start_time = 0
-  end_time = 80.0
+  end_time = 1.0e4 #15216 #7608.7
   #dt = 1.0e-2
   dtmin = 1.0e-10 
-  dtmax = 0.5
+  dtmax = 50
   active = 'TimeStepper'
   [./TimeStepper]
       cutback_factor = 0.4
