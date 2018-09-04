@@ -143,7 +143,6 @@ AddGImmobile::act()
       params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
       _problem->addKernel("GImmobileL01D", "GImmobileL01D_" + var_name+ "_" + Moose::stringify(counter), params);
     }
-    //printf("add GImmobileL0: %s \n",var_name.c_str());
     counter++;
 
     var_name = name() +"1v"+ Moose::stringify(cur_size);
@@ -163,11 +162,7 @@ AddGImmobile::act()
       params1.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
       _problem->addKernel("GImmobileL11D", "GImmobileL11D_" + var_name+ "_" + Moose::stringify(counter), params1);
     }
-    //printf("add GImmobileL1: %s \n",var_name.c_str());
     counter++;
-
-    //for(int i=0;i<coupled_v_vars.size();i++) printf("coupled v var: %s\n",coupled_v_vars[i].c_str());
-    //for(int i=0;i<coupled_i_vars.size();i++) printf("coupled i var: %s\n",coupled_i_vars[i].c_str());
   }
       
 //Second add immobile i
@@ -229,8 +224,6 @@ AddGImmobile::act()
       params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
       _problem->addKernel("GImmobileL01D", "GImmobileL01D_" + var_name_i+ "_" + Moose::stringify(counter), params);
     }
-
-    //printf("add GImmobileL0: %s \n",var_name_i.c_str());
     counter++;
 
     var_name_i = name() +"1i"+ Moose::stringify(cur_size);
@@ -250,11 +243,6 @@ AddGImmobile::act()
       params1.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
       _problem->addKernel("GImmobileL11D", "GImmobileL11D_" + var_name_i+ "_" + Moose::stringify(counter), params1);
     }
-    //printf("add GImmobileL1: %s \n",var_name_i.c_str());
     counter++;
-
-    //for(int i=0;i<coupled_v_vars.size();i++) printf("coupled v var: %s\n",coupled_v_vars[i].c_str());
-    //for(int i=0;i<coupled_i_vars.size();i++) printf("coupled i var: %s\n",coupled_i_vars[i].c_str());
-
   }
 }

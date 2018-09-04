@@ -44,8 +44,10 @@ InputParameters validParams<AddImmobileDefects>()
   InputParameters params = validParams<AddVariableAction>();
   params.addRequiredParam<int>("number_v", "The number of vacancy variables to add");
   params.addRequiredParam<int>("number_i", "The number of interstitial variables to add");
-  params.addRequiredParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
-  params.addRequiredParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
+  params.addParam<std::vector<int> >("mobile_v_size", "A vector of mobile vacancy cluster");
+  params.addParam<std::vector<int> >("mobile_i_size", "A vector of mobile intersitial cluster");
+  params.addParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
+  params.addParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
   params.addRequiredParam<std::string>("group_constant", "user object name");
   return params;
 }
@@ -61,14 +63,24 @@ AddImmobileDefects::act()
 {
   int number_v = getParam<int>("number_v");
   int number_i = getParam<int>("number_i");
-  int max_mobile_v = getParam<int>("max_mobile_v");
-  int max_mobile_i = getParam<int>("max_mobile_i");
-  
+  if ((isParamValid("mobile_v_size")^isParamValid("max_mobile_v") != 1) || (isParamValid("mobile_v_size")^isParamValid("max_mobile_v") != 1)){
+    mooseError("Check the setting of mobile species, only one definition is allowed");
+  }
   std::vector<int> v_mobile,i_mobile;
-  for(int i=0;i<max_mobile_v;i++)
-    v_mobile.push_back(i+1);
-  for(int i=0;i<max_mobile_i;i++)
-    i_mobile.push_back(i+1);
+  if (isParamValid("mobile_v_size"))
+    v_mobile = getParam<std::vector<int> >("mobile_v_size");
+  else {
+    int max_mobile_v = getParam<int>("max_mobile_v");
+    for(int i=0;i<max_mobile_v;i++)
+      v_mobile.push_back(i+1);
+  }
+  if (isParamValid("mobile_i_size"))
+    i_mobile = getParam<std::vector<int> >("mobile_i_size");
+  else {
+    int max_mobile_i = getParam<int>("max_mobile_i");
+    for(int i=0;i<max_mobile_i;i++)
+      i_mobile.push_back(i+1);
+  }
 
   std::string uo = getParam<std::string>("group_constant");
 

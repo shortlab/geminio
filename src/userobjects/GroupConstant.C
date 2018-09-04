@@ -16,16 +16,14 @@ template<>
 InputParameters validParams<GroupConstant>()
 {
   InputParameters params = validParams<GeneralUserObject>();
-  MooseEnum GroupScheme("Uniform Gaussian","Uniform");
+  MooseEnum GroupScheme("Uniform","Uniform");
   params.addRequiredParam<MooseEnum>("GroupScheme",GroupScheme, "Group method to use. Choices are: "+GroupScheme.getRawNames());
-  params.addRequiredParam<int>("max_defect_v_size","largest cluster size");
-  params.addRequiredParam<int>("max_defect_i_size","largest cluster size");
-  params.addParam<int>("number_v","Total number of groups, count single size as a group with group size 1");
-  params.addParam<int>("number_i","Total number of groups, count single size as a group with group size 1");
-  params.addRequiredParam<std::vector<int> >("mobile_v_size", "A vector of mobile species sizes");
-  params.addRequiredParam<std::vector<int> >("mobile_i_size", "A vector of mobile species sizes");
-  params.addParam<int>("max_single_v_group","largest cluster size using group size of 1");
-  params.addParam<int>("max_single_i_group","largest cluster size using group size of 1");
+  params.addRequiredParam<int>("number_v","Total number of groups, count single size as a group with group size 1");
+  params.addRequiredParam<int>("number_i","Total number of groups, count single size as a group with group size 1");
+  params.addParam<std::vector<int> >("mobile_v_size", "A vector of mobile species sizes");
+  params.addParam<std::vector<int> >("mobile_i_size", "A vector of mobile species sizes");
+  params.addParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
+  params.addParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
   params.addRequiredParam<Real>("temperature","[K], system temperature");
   params.addParam<bool>("update",false,"Update grouping scheme or not");
   params.addRequiredParam<UserObjectName>("material","name of the userobject that provide material constants, i.e. emit, abosrb");
@@ -38,27 +36,37 @@ GroupConstant::GroupConstant(const InputParameters & parameters) :
     _GroupScheme(getParam<MooseEnum>("GroupScheme")),
     _Ng_v(isParamValid("number_v")?getParam<int>("number_v"):(getParam<int>("max_defect_v_size")-1)),
     _Ng_i(isParamValid("number_i")?getParam<int>("number_i"):(getParam<int>("max_defect_i_size")-1)),
-    _num_v(getParam<int>("max_defect_v_size")),
-    _num_i(getParam<int>("max_defect_i_size")),
-    _v_size(getParam<std::vector<int> >("mobile_v_size")),
-    _i_size(getParam<std::vector<int> >("mobile_i_size")),
-    _single_v_group(isParamValid("max_single_v_group")?getParam<int>("max_single_v_group"):(getParam<int>("max_defect_v_size")-1)),
-    _single_i_group(isParamValid("max_single_i_group")?getParam<int>("max_single_i_group"):(getParam<int>("max_defect_i_size")-1)),
     _T(getParam<Real>("temperature")),
     _update(getParam<bool>("update")),
     _material(&getUserObject<GMaterialConstants>("material"))
    // _emit_array(NULL),
    // _absorb_matrix(NULL)
 {
+    if ((isParamValid("mobile_v_size")^isParamValid("max_mobile_v") != 1) || (isParamValid("mobile_v_size")^isParamValid("max_mobile_v") != 1)){
+      mooseError("Check the setting of mobile species, only one definition is allowed");
+    }
+    std::vector<int> v_size,i_size;
+    if (isParamValid("mobile_v_size"))
+      _v_size = getParam<std::vector<int> >("mobile_v_size");
+    else {
+      int max_mobile_v = getParam<int>("max_mobile_v");
+      for(int i=0;i<max_mobile_v;i++)
+        _v_size.push_back(i+1);
+    }
+    if (isParamValid("mobile_i_size"))
+      _i_size = getParam<std::vector<int> >("mobile_i_size");
+    else {
+      int max_mobile_i = getParam<int>("max_mobile_i");
+      for(int i=0;i<max_mobile_i;i++)
+        _i_size.push_back(i+1);
+    }
+
     _atomic_vol = _material->atomic_vol;
   // test input correctness
-    if(_v_size.size() > 0 && _single_v_group < *std::max_element(_v_size.begin(),_v_size.end()))
+    if(_v_size.size() > 0 && _Ng_v < *std::max_element(_v_size.begin(),_v_size.end()))
         mooseError("max_single_group should be larger than the largest mobile size, here");
-    if( _single_v_group > _Ng_v  || _single_i_group > _Ng_i)
-        mooseError("max_single_group should be samller than total groups");
-    if( _i_size.size() > 0 && _single_i_group < *std::max_element(_i_size.begin(),_i_size.end())){
+    if( _i_size.size() > 0 && _Ng_i < *std::max_element(_i_size.begin(),_i_size.end()))
         mooseError("max_single_group should be larger than the largest mobile size, there");
-    }
 
     GroupScheme_v.reserve(_Ng_v+1);
     GroupScheme_i.reserve(_Ng_i+1);
@@ -113,41 +121,23 @@ GroupConstant::initialize()
 void
 GroupConstant::setGroupScheme(){//total _Ng group, _Ng+1 node
   if(_GroupScheme=="Uniform"){
-    if(_num_v < _Ng_v || _num_i < _Ng_i)
-        mooseError("Size setting not correct");
 //add vacancy group scheme
     if(_Ng_v>0){
-        int single_v_group = _single_v_group+1;//1. 2. 3. each as a group, [1 2) [2 3) [3 4)
-        for(int i=1;i<=single_v_group;i++){
+        //1. 2. 3. each as a group, [1 2) [2 3) [3 4)
+        for(int i=1;i<=_Ng_v+1;i++){
             GroupScheme_v.push_back(i);
 //            printf("add %d\n",GroupScheme_v.back());
         }
-        if(_single_v_group<_Ng_v){
-          double interval = 1.0*(_num_v-single_v_group)/(_Ng_v-single_v_group+1);
-          for(int i=1;i<(_Ng_v-_single_v_group+1);i++){
-              int next_size = (int)(single_v_group+i*interval);
-              GroupScheme_v.push_back(next_size);
-          }
-        }
-        if(GroupScheme_v.back() != _num_v) GroupScheme_v[GroupScheme_v.size()-1] = _num_v;
         if((int)(GroupScheme_v.size()) != _Ng_v+1)
           mooseError("Group number ", GroupScheme_v.size(), " not correct");
     }
 //append intersitial group scheme
     if(_Ng_i>0){
-        int single_i_group = _single_i_group+1;//1. 2. 3. each as a group, [1 2) [2 3) [3 4)
-        for(int i=1;i<=single_i_group;i++){
+        //1. 2. 3. each as a group, [1 2) [2 3) [3 4)
+        for(int i=1;i<=_Ng_i+1;i++){
             GroupScheme_i.push_back(-i);//make negative to distinguish from vacancy type
  //           printf("add %d\n",-i);
         }
-        if(_single_i_group<_Ng_i){
-          double interval = 1.0*(_num_i-single_i_group)/(_Ng_i-single_i_group+1);
-          for(int i=1;i<(_Ng_i-_single_i_group+1);i++){
-              int next_size = (int)(single_i_group+i*interval);
-              GroupScheme_i.push_back(-next_size);
-          }
-        }
-        if(GroupScheme_i.back() != -_num_i) GroupScheme_i[GroupScheme_i.size()-1] = -_num_i;
         if((int)(GroupScheme_i.size()) != _Ng_i+1)
           mooseError("Group number ", GroupScheme_i.size(), " not correct");
     }

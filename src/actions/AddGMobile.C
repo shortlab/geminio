@@ -119,7 +119,6 @@ AddGMobile::act()
       params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
       _problem->addKernel("GMobile1D", "GMobile1D_" + var_name_v+ "_" + Moose::stringify(counter), params);
     }
-    //printf("add GMobile: %s \n",var_name_v.c_str());
     counter++;
 
     //add pesudo kernel for L1 coefficient
@@ -149,7 +148,6 @@ AddGMobile::act()
       params.set<std::vector<VariableName> > ("coupled_i_auxvars") = coupled_i_auxvars;
       _problem->addKernel("GMobile1D", "GMobile1D_" + var_name_i+ "_" + Moose::stringify(counter), params);
     }
-    //printf("add GMobile: %s \n",var_name_i.c_str());
     counter++;
 
     //add pesudo kernel for L1 coefficient

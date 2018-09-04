@@ -124,7 +124,6 @@ AddLotsOfFunction::act()
     params.set<std::vector<Real> >("y") = y;
     params.set<Real>("tlimit") = t_limit;
     _problem->addFunction("PiecewiseLinearTimeLimit", fun_name_v, params);
-    //printf("add Function: %s\n",fun_name_v.c_str());
   }
   for (unsigned int cur_num = 1; cur_num <= ii.size(); cur_num++)
   {
@@ -133,7 +132,6 @@ AddLotsOfFunction::act()
     for (unsigned int i=0; i<rows; ++i)
     {
       y.push_back(myvec[i*cols+cur_num+vv.size()]);//gain should be negative in the kernel
-      //if(cur_num==2) std::cout << "cur_nm: " << cur_num << " value: " << ((-1.0)*myvec[i*cols+cur_num+vv.size()])<< std::endl;
     }    
     std::string fun_name_i = name() +"i"+ Moose::stringify(ii[cur_num-1]);
     InputParameters params = _factory.getValidParams("PiecewiseLinearTimeLimit");
@@ -144,6 +142,5 @@ AddLotsOfFunction::act()
     params.set<std::vector<Real> >("y") = y;
     params.set<Real>("tlimit") = t_limit;
     _problem->addFunction("PiecewiseLinearTimeLimit", fun_name_i, params);
-    //printf("add Function: %s\n",fun_name_i.c_str());
   }
 }

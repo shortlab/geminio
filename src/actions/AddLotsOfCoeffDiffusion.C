@@ -45,8 +45,10 @@ InputParameters validParams<AddLotsOfCoeffDiffusion>()
   InputParameters params = validParams<AddVariableAction>();
   params.addRequiredParam<unsigned int>("number_v", "The number of vacancy variables to add");
   params.addRequiredParam<unsigned int>("number_i", "The number of interstitial variables to add");
-  params.addRequiredParam<std::vector<int> >("mobile_v_size", "A vector of mobile species sizes");
-  params.addRequiredParam<std::vector<int> >("mobile_i_size", "A vector of mobile species sizes");
+  params.addParam<std::vector<int> >("mobile_v_size", "A vector of mobile species sizes");
+  params.addParam<std::vector<int> >("mobile_i_size", "A vector of mobile species sizes");
+  params.addParam<int>("max_mobile_v", "maximum size of mobile vacancy cluster");
+  params.addParam<int>("max_mobile_i", "maximum size of mobile intersitial cluster");
   params.addParam<bool>("custom_input",false,"mannually input coefficients");
   params.addParam<std::vector<Real> >("diff_i", "diffusivity of i clusters from 1 to n_i");
   params.addParam<std::vector<Real> >("diff_v", "diffusivity of v clusters from 1 to n_v");
@@ -67,8 +69,26 @@ AddLotsOfCoeffDiffusion::act()
   bool custom = getParam<bool>("custom_input");
   unsigned int _total_v = getParam<unsigned int>("number_v");
   unsigned int _total_i = getParam<unsigned int>("number_i");
-  std::vector<int> v_size = getParam<std::vector<int> >("mobile_v_size");
-  std::vector<int> i_size = getParam<std::vector<int> >("mobile_i_size");
+  
+  if ((isParamValid("mobile_v_size")^isParamValid("max_mobile_v") != 1) || (isParamValid("mobile_v_size")^isParamValid("max_mobile_v") != 1)){
+    mooseError("Check the setting of mobile species, only one definition is allowed");
+  }
+  std::vector<int> v_size,i_size;
+  if (isParamValid("mobile_v_size"))
+    v_size = getParam<std::vector<int> >("mobile_v_size");
+  else {
+    int max_mobile_v = getParam<int>("max_mobile_v");
+    for(int i=0;i<max_mobile_v;i++)
+      v_size.push_back(i+1);
+  }
+  if (isParamValid("mobile_i_size"))
+    i_size = getParam<std::vector<int> >("mobile_i_size");
+  else {
+    int max_mobile_i = getParam<int>("max_mobile_i");
+    for(int i=0;i<max_mobile_i;i++)
+      i_size.push_back(i+1);
+  }
+
   std::vector<Real> vv,ii;
   Real temp = getParam<Real>("temperature");
   if (isParamValid("diff_v") && custom == true)

@@ -63,7 +63,6 @@ AddLotsOfTimeDerivative::act()
     InputParameters params = _factory.getValidParams("TimeDerivative");
     params.set<NonlinearVariableName>("variable") = var_name_v;
     _problem->addKernel("TimeDerivative","dt_"+ var_name_v+Moose::stringify(counter), params);
-   // printf("add TimeDerivative: %s\n",var_name_v.c_str());
     counter++;
   }
   for (unsigned int cur_num = 1; cur_num <= number_i; cur_num++)
@@ -72,7 +71,6 @@ AddLotsOfTimeDerivative::act()
     InputParameters params = _factory.getValidParams("TimeDerivative");
     params.set<NonlinearVariableName>("variable") = var_name_i;
     _problem->addKernel("TimeDerivative", "dt_"+ var_name_i+Moose::stringify(counter), params);
-    //printf("add TimeDerivative: %s\n",var_name_i.c_str());
     counter++;
   }
 }

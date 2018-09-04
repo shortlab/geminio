@@ -83,7 +83,6 @@ AddGConstantKernels::act()
     if (isParamValid("tlimit"))
       params.set<Real>("tlimit") = getParam<Real>("tlimit");
     _problem->addKernel("ConstantKernel", "ConstantKernel_" +  var_name_v + Moose::stringify(counter), params);
-    //printf("add Source: %s\n",var_name_v.c_str());
     counter++;
   }
   for (unsigned int cur_num = 1; cur_num <= i_size.size(); cur_num++)
@@ -95,7 +94,6 @@ AddGConstantKernels::act()
     if (isParamValid("tlimit"))
       params.set<Real>("tlimit") = getParam<Real>("tlimit");
     _problem->addKernel("ConstantKernel", "ConstantKernel_"+ var_name_i+ Moose::stringify(counter), params);
-    //printf("add Source: %s\n",var_name_i.c_str());
     counter++;
   }
 }
